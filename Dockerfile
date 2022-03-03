@@ -1,17 +1,22 @@
 FROM python:3.7
 
-WORKDIR /duckietown_pondcleaner
+# working directory
+WORKDIR /library
+
+# configure environment
+ENV DISABLE_CONTRACTS=1
+
+# install requirements
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
+# copy everything
 COPY . .
 
+# show list of files copied
 RUN find .
 
-ENV DISABLE_CONTRACTS=1
-
+# install dependencies
 RUN pipdeptree
-RUN python setup.py develop --no-deps
-# run it once to see everything OK
-RUN dt-pc-demo --help
-CMD ["dt-pc-demo"]
+RUN python setup.py develop
+

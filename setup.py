@@ -29,7 +29,7 @@ def get_version_from_source(filename):
     return version
 
 
-version = get_version_from_source(f"src/{package_name}/__init__.py")
+version = get_version_from_source(f"src/{package_name.replace('-', '_')}/__init__.py")
 
 # read project dependencies
 # NO - dependencies.txt is for testing dependiences - EVERYTHING PINNED
@@ -38,7 +38,12 @@ version = get_version_from_source(f"src/{package_name}/__init__.py")
 # with open(dependencies_file, 'rt') as fin:
 #     dependencies = list(filter(lambda line: not line.startswith('#'), fin.read().splitlines()))
 
-install_requires = []
+install_requires = [
+    # opencv4
+    "opencv-python-headless",
+    # numpy (1.21.5 is the last numpy supporting Python 3.7)
+    "numpy<=1.21.5"
+]
 tests_require = []
 
 # compile description
@@ -61,7 +66,7 @@ print("The following packages were found:\n\t - " + "\n\t - ".join(packages) + "
 
 # setup package
 setup(
-    name=package_name,
+    name=f"lib-{package_name}",
     author=maintainer,
     author_email=maintainer_email,
     url=library_webpage,
