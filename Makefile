@@ -39,7 +39,7 @@ black:
 
 clean:
 	coverage erase
-	rm -rf $(out) $(coverage_dir) $(tr)
+	rm -rf $(coverage_dir) $(tr)
 
 test: clean
 	mkdir -p  $(tr)
@@ -70,10 +70,10 @@ build-no-cache:
 	docker build --no-cache -t $(tag) .
 
 test-docker: build
-	docker run -it --rm $(tag) make test
+	docker run -it --rm -v $(PWD)/out:/library/out:rw $(tag) make test
 
 test-docker-mounted-src:
-	docker run -it --rm -v $(PWD)/src:/$(library_name)/src:ro $(tag) make test
+	docker run -it --rm -v $(PWD)/out:/library/out:rw -v $(PWD)/src:/library/src:ro $(tag) make test
 
 
 run:
@@ -82,7 +82,7 @@ run:
 
 run-with-mounted-src:
 	mkdir -p out-docker
-	docker run -it -v $(PWD)/src:/$(library_name)/src:ro -v $(PWD)/out-docker:/out $(tag) dt-pc-demo
+	docker run -it -v $(PWD)/src:/library/src:ro -v $(PWD)/out-docker:/out $(tag) dt-pc-demo
 
 
 coverage-report:

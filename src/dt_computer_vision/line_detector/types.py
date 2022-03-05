@@ -9,14 +9,14 @@ class Detections:
     """
 
     def __init__(self, lines, normals, centers, map):
-        self.lines = lines  #: An ``Nx4`` array with every row representing a line ``[x1, y1, x2, y2]``
-        self.normals = normals  #: An ``Nx2`` array with every row representing the normal of a line ``[nx,
-        # ny]``
-
-        self.centers = centers  #: An ``Nx2`` array with every row representing the center of a line ``[cx,
-        # cy]``
-
-        self.map = map  #: A binary map of the area from which the line segments were extracted
+        # An ``Nx4`` array with every row representing a line ``[x1, y1, x2, y2]``
+        self.lines = lines
+        # An ``Nx2`` array with every row representing the normal of a line ``[nx, ny]``
+        self.normals = normals
+        # An ``Nx2`` array with every row representing the center of a line ``[cx, cy]``
+        self.centers = centers
+        # A binary map of the area from which the line segments were extracted
+        self.map = map
 
 
 class ColorRange:
@@ -96,10 +96,11 @@ class ColorRange:
 
     def inRange(self, image):
         """
-        Applies the `OpenCV inRange <https://docs.opencv.org/3.4/d2/de8/group__core__array.html#ga48af0ab51e36436c5d04340e036ce981>`_
+        Applies the `OpenCV inRange
+        <https://docs.opencv.org/3.4/d2/de8/group__core__array.html#ga48af0ab51e36436c5d04340e036ce981>`_
         method to every color range entry. Returns the bitwise OR of the results.
-        In other words, returns a binary map with 1 for the pixels of the input image that fall in at least one of
-        the color ranges.
+        In other words, returns a binary map with 1 for the pixels of the input image that fall
+        in at least one of the color ranges.
 
         Args:
             image (:obj:`numpy array`): an ``HSV`` image
@@ -118,8 +119,8 @@ class ColorRange:
     @property
     def representative(self):
         """
-        Provides an representative color for this color range. This is the average color of the first range (if more
-        than one ranges are set).
+        Provides an representative color for this color range.
+        This is the average color of the first range (if more than one ranges are set).
 
         Returns:
             :obj:`list`: a list with 3 entries representing an HSV color

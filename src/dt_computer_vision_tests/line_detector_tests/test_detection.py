@@ -7,8 +7,10 @@ import numpy as np
 from dt_computer_vision.line_detector import LineDetector, ColorRange, Detections
 from dt_computer_vision.line_detector.rendering import draw_segments
 
-assets_dir: str = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "assets")
-output_dir: str = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "out")
+this_dir: str = os.path.dirname(os.path.realpath(__file__))
+this_lib: str = os.path.basename(this_dir)
+assets_dir: str = os.path.join(this_dir, "..", "assets")
+output_dir: str = os.path.join(this_dir, "..", "..", "..", "out", "test-results", this_lib)
 colors = {
     "red": {
         "low_1": [0, 140, 100],
@@ -25,6 +27,8 @@ colors = {
         "high": [45, 255, 255]
     }
 }
+
+os.makedirs(output_dir, exist_ok=True)
 
 
 def _detect_color(image: np.ndarray, color: str) -> Tuple[Detections, np.ndarray]:
