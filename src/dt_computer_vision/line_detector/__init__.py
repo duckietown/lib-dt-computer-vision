@@ -23,7 +23,5 @@
 
 """
 
+from .types import Detections, ColorRange
 from .line_detector import LineDetector
-from .detections import Detections
-from .color_range import ColorRange
-from .plot_detections import plotSegments, plotMaps

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 
-def plotSegments(image, detections):
+def draw_segments(image, detections):
     """
 
     Draws a set of line segment detections on an image.
@@ -19,7 +19,6 @@ def plotSegments(image, detections):
     im = np.copy(image)
 
     for color_range, det in list(detections.items()):
-
         # convert HSV color to BGR
         c = color_range.representative
         c = np.uint8([[[c[0], c[1], c[2]]]])
@@ -44,7 +43,7 @@ def plotSegments(image, detections):
     return im
 
 
-def plotMaps(image, detections):
+def draw_maps(image, detections):
     """
 
     Draws a set of color filter maps (the part of the images falling in a given color range) on an image.

@@ -1,20 +1,19 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABC
+from typing import Tuple
 
 import cv2
 import numpy as np
 
-from .detections import Detections
+from .types import Detections, ColorRange
+
+BGRImage = np.ndarray
+HSVImage = np.ndarray
 
 
-class LineDetectorInterface(metaclass=ABCMeta):
-
-    @abstractmethod
-    def setImage(self, bgr: np.ndarray):
-        """Sets the image to work with"""
-        pass
+class LineDetectorInterface(ABC):
 
     @abstractmethod
-    def detectLines(self, color):
+    def detect(self, image: BGRImage, color: ColorRange) -> Detections:
         """Returns a tuple of class Detections"""
         pass
 
@@ -33,7 +32,7 @@ class LineDetector(LineDetectorInterface):
     <https://en.wikipedia.org/wiki/HSL_and_HSV>`_, which is much better for color segmentation,
     and applies `Canny edge detection <https://en.wikipedia.org/wiki/Canny_edge_detector>`_.
 
-    Then, to do the actual line segment extraction, a call to :py:meth:`detectLines` with a
+    Then, to do the actual line segment extraction, a call to :py:meth:`detect` with a
     :py:class:`ColorRange` object must be made.
     Multiple such calls with different colour ranges can be made and these will reuse the
     precomputed HSV image and Canny edges.
@@ -71,70 +70,58 @@ class LineDetector(LineDetectorInterface):
 
     def __init__(
             self,
-            canny_thresholds=[80, 200],
+            canny_thresholds=None,
             canny_aperture_size=3,
             dilation_kernel_size=3,
             hough_threshold=2,
             hough_min_line_length=3,
             hough_max_line_gap=1,
     ):
-
-        self.canny_thresholds = canny_thresholds
+        self.canny_thresholds = canny_thresholds or [80, 200]
         self.canny_aperture_size = canny_aperture_size
         self.dilation_kernel_size = dilation_kernel_size
         self.hough_threshold = hough_threshold
         self.hough_min_line_length = hough_min_line_length
         self.hough_max_line_gap = hough_max_line_gap
 
-        # initialize the variables that will hold the processed images
-        self.bgr = np.empty(0)  #: Holds the ``BGR`` representation of an image
-        self.hsv = np.empty(0)  #: Holds the ``HSV`` representation of an image
-        self.canny_edges = np.empty(0)  #: Holds the Canny edges of an image
-
-    def setImage(self, image):
-        """
-        Sets the :py:attr:`bgr` attribute to the provided image. Also stores
-        an `HSV <https://en.wikipedia.org/wiki/HSL_and_HSV>`_ representation of the image and the
-        extracted `Canny edges <https://en.wikipedia.org/wiki/Canny_edge_detector>`_.
-        This is separated from :py:meth:`detectLines` so that the HSV representation and the
-        edge extraction can be reused for multiple colors.
-
-        Args:
-            image (:obj:`numpy array`): input image
-
-        """
-
-        self.bgr = np.copy(image)
-        self.hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        self.canny_edges = self.findEdges()
-
-    def getImage(self):
-        """
-        Provides the image currently stored in the :py:attr:`bgr` attribute.
-
-        Returns:
-            :obj:`numpy array`: the stored image
-        """
-        return self.bgr
-
-    def findEdges(self):
+    @staticmethod
+    def find_edges(image: BGRImage, canny_thr_low: int, canny_thr_high: int,
+                   canny_aperture_size: int) -> np.ndarray:
         """
         Applies `Canny edge detection <https://en.wikipedia.org/wiki/Canny_edge_detector>`_
         to a ``BGR`` image.
 
+        Args:
+            image: (:obj:`numpy array`): BGR image to process.
+
+            canny_thr_low (:obj:`int`): low threshold for the hysteresis procedure, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=canny
+            #canny>`__.
+
+            canny_thr_high (:obj:`int`): high threshold for the hysteresis procedure, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=canny
+            #canny>`__.
+
+            canny_aperture_size (:obj:`int`): aperture size for a Sobel operator, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=canny
+            #canny>`__.
 
         Returns:
             :obj:`numpy array`: a binary image with the edges
         """
+        # perform edge detection
         edges = cv2.Canny(
-            self.bgr,
-            self.canny_thresholds[0],
-            self.canny_thresholds[1],
-            apertureSize=self.canny_aperture_size,
+            image,
+            canny_thr_low,
+            canny_thr_high,
+            apertureSize=canny_aperture_size,
         )
         return edges
 
-    def houghLine(self, edges):
+    @staticmethod
+    def hough_line(edges: np.ndarray, hough_threshold: int,
+                   hough_min_line_length: int,
+                   hough_max_line_gap: int, ) -> np.ndarray:
         """
         Finds line segments in a binary image using the probabilistic Hough transform.
         Based on the OpenCV function
@@ -143,6 +130,21 @@ class LineDetector(LineDetectorInterface):
 
         Args:
             edges (:obj:`numpy array`): binary image with edges
+
+            hough_threshold (:obj:`int`): Accumulator threshold parameter. Only those lines are
+            returned that get enough votes, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight
+            =houghlinesp#houghlinesp>`__.
+
+            hough_min_line_length (:obj:`int`): Minimum line length. Line segments shorter than
+            that are rejected, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight
+            =houghlinesp#houghlinesp>`__.
+
+            hough_max_line_gap (:obj:`int`): Maximum allowed gap between points on the same line to
+            link them, details `here
+            <https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight
+            =houghlinesp#houghlinesp>`__.
 
         Returns:
              :obj:`numpy array`: An ``Nx4`` array where each row represents a
@@ -154,9 +156,9 @@ class LineDetector(LineDetectorInterface):
             edges,
             rho=1,
             theta=np.pi / 180,
-            threshold=self.hough_threshold,
-            minLineLength=self.hough_min_line_length,
-            maxLineGap=self.hough_max_line_gap,
+            threshold=hough_threshold,
+            minLineLength=hough_min_line_length,
+            maxLineGap=hough_max_line_gap,
         )
         if lines is not None:
             lines = lines.reshape((-1, 4))  # it has an extra dimension
@@ -165,7 +167,9 @@ class LineDetector(LineDetectorInterface):
 
         return lines
 
-    def colorFilter(self, color_range):
+    @staticmethod
+    def color_filter(image: HSVImage, color: ColorRange, edges: np.ndarray,
+                     dilation_kernel_size: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Obtains the regions of the image that fall in the provided color range and the subset
         of the detected Canny edges which are in these regions.
@@ -173,32 +177,41 @@ class LineDetector(LineDetectorInterface):
         operation to smooth and grow the regions map.
 
         Args:
-            color_range (:py:class:`ColorRange`): A :py:class:`ColorRange` object specifying
+            image: (:obj:`numpy array`): HSV image to process.
+
+            color (:py:class:`ColorRange`): A :py:class:`ColorRange` object specifying
             the desired colors.
 
+            edges (:obj:`numpy array`): a binary image with the edges as returned by ``find_edges``.
+
+            dilation_kernel_size (:obj:`int`): kernel size for the dilation operation which fills
+            in the gaps in the color filter result.
+
         Returns:
+            :obj:`tuple`: a tuple containing:
 
-            :obj:`numpy array`: binary image with the regions of the image that fall in the
-            color range
+                :obj:`numpy array`: binary image with the regions of the image that fall in the
+                color range
 
-            :obj:`numpy array`: binary image with the edges in the image that fall in the
-            color range
+                :obj:`numpy array`: binary image with the edges in the image that fall in the
+                color range
         """
         # threshold colors in HSV space
-        map = color_range.inRange(self.hsv)
+        map = color.inRange(image)
 
         # binary dilation: fills in gaps and makes the detected regions grow
         kernel = cv2.getStructuringElement(
-            cv2.MORPH_ELLIPSE, (self.dilation_kernel_size, self.dilation_kernel_size)
+            cv2.MORPH_ELLIPSE, (dilation_kernel_size, dilation_kernel_size)
         )
         map = cv2.dilate(map, kernel)
 
         # extract only the edges which come from the region with the selected color
-        edge_color = cv2.bitwise_and(map, self.canny_edges)
+        edge_color = cv2.bitwise_and(map, edges)
 
         return map, edge_color
 
-    def findNormal(self, map, lines):
+    @staticmethod
+    def find_normal(map: np.ndarray, lines: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculates the centers of the line segments and their normals.
 
@@ -243,22 +256,36 @@ class LineDetector(LineDetectorInterface):
 
         return centers, normals
 
-    def detectLines(self, color_range):
+    def detect(self, image: BGRImage, color: ColorRange) -> Detections:
         """
         Detects the line segments in the currently set image that occur in and the edges of
         the regions of the image
         that are within the provided colour ranges.
 
         Args:
-            color_range (:py:class:`ColorRange`): A :py:class:`ColorRange` object specifying
-            the desired colors.
+            image (:obj:`numpy array`):             BGR image as numpy array
+            color (:py:class:`ColorRange`):   A :py:class:`ColorRange` object specifying
+                                                    the desired color.
 
         Returns:
             :py:class:`Detections`: A :py:class:`Detections` object with the map of regions
                                     containing the desired colors, and the detected lines,
                                     together with their center points and normals,
         """
-        map, edge_color = self.colorFilter(color_range)
-        lines = self.houghLine(edge_color)
-        centers, normals = self.findNormal(map, lines)
+        # find edges
+        edges = self.find_edges(image,
+                                self.canny_thresholds[0],
+                                self.canny_thresholds[1],
+                                self.canny_aperture_size)
+        # bgr -> hsv
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        # color filter
+        map, edge_color = self.color_filter(hsv, color, edges, self.dilation_kernel_size)
+        # hough lines
+        lines = self.hough_line(edge_color, self.hough_threshold,
+                                self.hough_min_line_length,
+                                self.hough_max_line_gap)
+        # find center and normals
+        centers, normals = self.find_normal(map, lines)
+        # pack detections and return them
         return Detections(lines=lines, normals=normals, map=map, centers=centers)
