@@ -43,19 +43,19 @@ clean:
 
 test: clean
 	mkdir -p  $(tr)
-	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage)  src  -v --nologcapture $(xunitmp)
+	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src -v --nologcapture $(xunitmp)
 
 
 test-parallel: clean
 	mkdir -p  $(tr)
-	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src  -v --nologcapture $(parallel)
+	DISABLE_CONTRACTS=1 nosetests $(extra) $(coverage) src -v --nologcapture $(parallel)
 
 
 test-parallel-circle:
 	DISABLE_CONTRACTS=1 \
 	NODE_TOTAL=$(CIRCLE_NODE_TOTAL) \
 	NODE_INDEX=$(CIRCLE_NODE_INDEX) \
-	nosetests $(coverage) $(xunitmp) src  -v  $(parallel)
+	nosetests $(coverage) $(xunitmp) src $(parallel)
 
 
 coverage-combine:
@@ -86,7 +86,7 @@ run-with-mounted-src:
 
 
 coverage-report:
-	coverage html  -d $(coverage_dir)
+	coverage html -d $(coverage_dir)
 
 docs:
 	sphinx-build src $(out)/docs
