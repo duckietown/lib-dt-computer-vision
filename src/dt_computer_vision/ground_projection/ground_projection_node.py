@@ -78,14 +78,6 @@ class GroundProjectionNode(DTROS):
 
         self.debug_img_bg = None
 
-        # Seems to be never used:
-        # self.service_homog_ = rospy.Service("~estimate_homography", EstimateHomography,
-        # self.estimate_homography_cb)
-        # self.service_gnd_coord_ = rospy.Service("~get_ground_coordinate", GetGroundCoord,
-        # self.get_ground_coordinate_cb)
-        # self.service_img_coord_ = rospy.Service("~get_image_coordinate", GetImageCoord,
-        # self.get_image_coordinate_cb)
-
     def cb_camera_info(self, msg: CameraInfo):
         """
         Initializes a :py:class:`image_processing.GroundProjectionGeometry` object and a
@@ -119,19 +111,20 @@ class GroundProjectionNode(DTROS):
         """
         # normalized coordinates to pixel:
         norm_pt = Point.from_message(point_msg)
+        # point to pixel [distorted point -> distorted pixel]
         pixel = self.ground_projector.vector2pixel(norm_pt)
-        # rectify
+        # rectify [distorted pixel -> rectified pixel]
         rect = self.rectifier.rectify_point(pixel)
-        # convert to Point
+        # convert back to point [rectified pixel -> rectified point]
         rect_pt = Point.from_message(rect)
-        # project on ground
+        # project on ground [rectified point -> ground point]
         ground_pt = self.ground_projector.pixel2ground(rect_pt)
-        # point to message
+        # wrap result in a ROS message
         ground_pt_msg = PointMsg()
         ground_pt_msg.x = ground_pt.x
         ground_pt_msg.y = ground_pt.y
         ground_pt_msg.z = ground_pt.z
-
+        # ---
         return ground_pt_msg
 
     def lineseglist_cb(self, seglist_msg):
@@ -152,7 +145,7 @@ class GroundProjectionNode(DTROS):
                 new_segment.points[0] = self.pixel_msg_to_ground_msg(received_segment.pixels_normalized[0])
                 new_segment.points[1] = self.pixel_msg_to_ground_msg(received_segment.pixels_normalized[1])
                 new_segment.color = received_segment.color
-                # TODO what about normal and points
+                # TODO: what about normal and points?
                 seglist_out.segments.append(new_segment)
             self.pub_lineseglist.publish(seglist_out)
 
@@ -166,25 +159,6 @@ class GroundProjectionNode(DTROS):
                 self.pub_debug_img.publish(debug_image_msg)
         else:
             self.log("Waiting for a CameraInfo message", "warn")
-
-    # def get_ground_coordinate_cb(self, req):
-    #     return GetGroundCoordResponse(self.pixel_msg_to_ground_msg(req.uv))
-    #
-    # def get_image_coordinate_cb(self, req):
-    #     return GetImageCoordResponse(self.gpg.ground2pixel(req.gp))
-    #
-    # def estimate_homography_cb(self, req):
-    #     rospy.loginfo("Estimating homography")
-    #     rospy.loginfo("Waiting for raw image")
-    #     img_msg = rospy.wait_for_message("/" + self.robot_name + "/camera_node/image/raw", Image)
-    #     rospy.loginfo("Got raw image")
-    #     try:
-    #         cv_image = self.bridge.imgmsg_to_cv2(img_msg, desired_encoding="bgr8")
-    #     except CvBridgeError as e:
-    #         rospy.logerr(e)
-    #     self.gp.estimate_homography(cv_image)
-    #     rospy.loginfo("wrote homography")
-    #     return EstimateHomographyResponse()
 
     def load_extrinsics(self):
         """
@@ -324,8 +298,8 @@ class GroundProjectionNode(DTROS):
         # plot every segment if both ends are in the scope of the image (within 50cm from the origin)
         for segment in seg_list.segments:
             if not np.any(
-                np.abs([segment.points[0].x, segment.points[0].y, segment.points[1].x, segment.points[1].y])
-                > 0.50
+                    np.abs([segment.points[0].x, segment.points[0].y, segment.points[1].x, segment.points[1].y])
+                    > 0.50
             ):
                 cv2.line(
                     image,
@@ -336,8 +310,3 @@ class GroundProjectionNode(DTROS):
                 )
 
         return image
-
-
-if __name__ == "__main__":
-    ground_projection_node = GroundProjectionNode(node_name="ground_projection")
-    rospy.spin()
