@@ -182,7 +182,7 @@ class LineDetector(LineDetectorInterface):
             color (:py:class:`ColorRange`): A :py:class:`ColorRange` object specifying
             the desired colors.
 
-            edges (:obj:`numpy array`): a binary image with the edges as returned by ``find_edges``.
+            edges (:obj:`numpy array`): binary image with the edges as returned by ``find_edges``.
 
             dilation_kernel_size (:obj:`int`): kernel size for the dilation operation which fills
             in the gaps in the color filter result.
@@ -198,16 +198,14 @@ class LineDetector(LineDetectorInterface):
         """
         # threshold colors in HSV space
         map = color.inRange(image)
-
         # binary dilation: fills in gaps and makes the detected regions grow
         kernel = cv2.getStructuringElement(
             cv2.MORPH_ELLIPSE, (dilation_kernel_size, dilation_kernel_size)
         )
         map = cv2.dilate(map, kernel)
-
         # extract only the edges which come from the region with the selected color
         edge_color = cv2.bitwise_and(map, edges)
-
+        # ---
         return map, edge_color
 
     @staticmethod
