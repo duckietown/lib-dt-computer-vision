@@ -69,3 +69,7 @@ def fill_holes(rmapx, rmapy):
 
         if nholes_filled == 0:
             break
+
+
+def ensure_ndarray(obj):
+    return obj if isinstance(obj, np.ndarray) else np.array(obj)

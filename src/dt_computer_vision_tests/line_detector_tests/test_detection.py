@@ -31,7 +31,7 @@ colors = {
 os.makedirs(output_dir, exist_ok=True)
 
 
-def _detect_color(image: np.ndarray, color: str) -> Tuple[Detections, np.ndarray]:
+def detect_color(image: np.ndarray, color: str) -> Tuple[Detections, np.ndarray]:
     detector = LineDetector()
     color_range: ColorRange = ColorRange.fromDict(colors[color])
     detections: Detections = detector.detect(image, color_range)
@@ -45,7 +45,7 @@ def test_image_0_white():
     image0_fpath: str = os.path.join(assets_dir, "image0.jpg")
     image0 = cv2.imread(image0_fpath)
     # ---
-    detections, image0_dets = _detect_color(image0, color)
+    detections, image0_dets = detect_color(image0, color)
     # ---
     assert len(detections.lines) == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
@@ -58,7 +58,7 @@ def test_image_0_yellow():
     image0_fpath: str = os.path.join(assets_dir, "image0.jpg")
     image0 = cv2.imread(image0_fpath)
     # ---
-    detections, image0_dets = _detect_color(image0, color)
+    detections, image0_dets = detect_color(image0, color)
     # ---
     assert len(detections.lines) == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
@@ -71,7 +71,7 @@ def test_image_0_red():
     image0_fpath: str = os.path.join(assets_dir, "image0.jpg")
     image0 = cv2.imread(image0_fpath)
     # ---
-    detections, image0_dets = _detect_color(image0, color)
+    detections, image0_dets = detect_color(image0, color)
     # ---
     assert len(detections.lines) == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
