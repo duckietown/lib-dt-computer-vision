@@ -9,7 +9,7 @@ from dt_computer_vision.line_detector.rendering import draw_segments
 
 this_dir: str = os.path.dirname(os.path.realpath(__file__))
 this_lib: str = os.path.basename(this_dir)
-assets_dir: str = os.path.join(this_dir, "..", "assets")
+assets_dir: str = os.path.join(this_dir, "..", "..", "..", "assets")
 output_dir: str = os.path.join(this_dir, "..", "..", "..", "out", "test-results", this_lib)
 colors = {
     "red": {

@@ -2,16 +2,15 @@ import os
 from typing import List
 
 import cv2
-import numpy as np
 
 from dt_computer_vision.anti_instagram import AntiInstagram
+from dt_computer_vision.camera import BGRImage
 
-BGRImage = np.ndarray
 Color = List[int]
 
 this_dir: str = os.path.dirname(os.path.realpath(__file__))
 this_lib: str = os.path.basename(this_dir)
-assets_dir: str = os.path.join(this_dir, "..", "assets")
+assets_dir: str = os.path.join(this_dir, "..", "..", "..", "assets")
 output_dir: str = os.path.join(this_dir, "..", "..", "..", "out", "test-results", this_lib)
 
 os.makedirs(output_dir, exist_ok=True)

@@ -5,6 +5,17 @@ from typing import Optional
 import cv2
 import numpy as np
 
+grid_size = 10
+# dimensions of the image are 1m x 1m so, 1px = (1 / size_x) meters
+size_x, size_y = 1600, 1600
+grid_size_x = int(size_x / grid_size)
+grid_size_y = int(size_y / grid_size)
+origin_x, origin_y = int(size_x / 2), size_y - grid_size_y
+grid_thickness = 5
+segment_thickness = 12
+font_size = 3.0
+font_thickness = 3
+
 
 def draw_grid_image():
     """
@@ -14,88 +25,60 @@ def draw_grid_image():
         :obj:`numpy array`: an OpenCV image
 
     """
-    # dimensions of the image are 1m x 1m so, 1px = 2.5mm
-    # the origin is at x=200 and y=300
-
     # initialize gray image
-    grid_image = np.ones((400, 400, 3), np.uint8) * 128
+    grid_image = np.ones((size_y, size_x, 3), np.uint8) * 128
 
     # draw vertical lines of the grid
-    for vline in np.arange(40, 361, 40):
+    for vline in np.arange(grid_size_x, size_x - grid_size_x + 1, grid_size_x):
         cv2.line(
-            grid_image, pt1=(vline, 20), pt2=(vline, 300), color=(255, 255, 0), thickness=1
+            grid_image,
+            pt1=(vline, grid_size_y),
+            pt2=(vline, origin_y),
+            color=(255, 255, 0),
+            thickness=grid_thickness
         )
 
-    # draw the coordinates
-    cv2.putText(
-        grid_image,
-        "-20cm",
-        (120 - 25, 300 + 15),
-        cv2.FONT_HERSHEY_PLAIN,
-        0.8,
-        (255, 255, 0),
-        1,
-    )
-    cv2.putText(
-        grid_image,
-        "  0cm",
-        (200 - 25, 300 + 15),
-        cv2.FONT_HERSHEY_PLAIN,
-        0.8,
-        (255, 255, 0),
-        1,
-    )
-    cv2.putText(
-        grid_image,
-        "+20cm",
-        (280 - 25, 300 + 15),
-        cv2.FONT_HERSHEY_PLAIN,
-        0.8,
-        (255, 255, 0),
-        1,
-    )
+    h_text_centering_offset = int(size_x / 20)
+    v_text_centering_offset = int(size_y / 200)
+
+    # draw the horizontal coordinates
+    for i in range(-4, 5, 2):
+        text = f"{i * 10}cm"
+        text = " " * max(0, 4 - len(text)) + text
+        cv2.putText(
+            grid_image,
+            text,
+            (origin_x + i * grid_size_x - h_text_centering_offset,
+             origin_y + h_text_centering_offset),
+            cv2.FONT_HERSHEY_PLAIN,
+            font_size,
+            (255, 255, 0),
+            font_thickness,
+        )
 
     # draw horizontal lines of the grid
-    for hline in np.arange(20, 301, 40):
+    for hline in np.arange(grid_size_y, size_y, grid_size_y):
         cv2.line(
-            grid_image, pt1=(40, hline), pt2=(360, hline), color=(255, 255, 0), thickness=1
+            grid_image,
+            pt1=(grid_size_x, hline),
+            pt2=(size_x - grid_size_x, hline),
+            color=(255, 255, 0),
+            thickness=grid_thickness
         )
 
-    # draw the coordinates
-    cv2.putText(
-        grid_image, "20cm", (2, 220 + 3), cv2.FONT_HERSHEY_PLAIN, 0.8, (255, 255, 0), 1
-    )
-    cv2.putText(
-        grid_image, " 0cm", (2, 300 + 3), cv2.FONT_HERSHEY_PLAIN, 0.8, (255, 255, 0), 1
-    )
-
-    # draw robot marker at the center
-    cv2.line(
-        grid_image,
-        pt1=(200 + 0, 300 - 20),
-        pt2=(200 + 0, 300 + 0),
-        color=(255, 0, 0),
-        thickness=1,
-    )
-
-    cv2.line(
-        grid_image,
-        pt1=(200 + 20, 300 - 20),
-        pt2=(200 + 0, 300 + 0),
-        color=(255, 0, 0),
-        thickness=1,
-    )
-
-    cv2.line(
-        grid_image,
-        pt1=(200 - 20, 300 - 20),
-        pt2=(200 + 0, 300 + 0),
-        color=(255, 0, 0),
-        thickness=1,
-    )
+    # draw the vertical coordinates
+    for i in range(0, 9, 2):
+        cv2.putText(
+            grid_image,
+            f"{i * 10}cm",
+            (10, origin_y - i * grid_size_y + v_text_centering_offset),
+            cv2.FONT_HERSHEY_PLAIN,
+            font_size,
+            (255, 255, 0),
+            font_thickness
+        )
 
     return grid_image
-
 
 
 def debug_image(segments, background_image: Optional[np.ndarray] = None):
@@ -110,28 +93,19 @@ def debug_image(segments, background_image: Optional[np.ndarray] = None):
         :obj:`numpy array`: an OpenCV image
 
     """
-    # dimensions of the image are 1m x 1m so, 1px = 2.5mm
-    # the origin is at x=200 and y=300
-
     background_image = background_image or draw_grid_image()
-
-    # map segment color variables to BGR colors
-    color_map = {Segment.WHITE: (255, 255, 255), Segment.RED: (0, 0, 255), Segment.YELLOW: (0, 255, 255)}
-
     image = background_image.copy()
-
     # plot every segment if both ends are in the scope of the image (within 50cm from the origin)
-    for segment in segments:
-        if not np.any(
-                np.abs([segment.points[0].x, segment.points[0].y, segment.points[1].x, segment.points[1].y])
-                > 0.50
-        ):
+    for color, lines in segments.items():
+        for start, end in lines:
+            # TODO: not sure what this IF is for
+            # if not np.any(np.abs([start.x, start.y, end.x, end.y]) > 0.50 ):
             cv2.line(
                 image,
-                pt1=(int(segment.points[0].y * -400) + 200, int(segment.points[0].x * -400) + 300),
-                pt2=(int(segment.points[1].y * -400) + 200, int(segment.points[1].x * -400) + 300),
-                color=color_map.get(segment.color, (0, 0, 0)),
-                thickness=1,
+                pt1=(int(start.y * -size_x) + origin_x, int(start.x * -size_y) + origin_y),
+                pt2=(int(end.y * -size_x) + origin_x, int(end.x * -size_y) + origin_y),
+                color=color,
+                thickness=segment_thickness,
             )
-
+    # ---
     return image

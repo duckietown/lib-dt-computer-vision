@@ -4,7 +4,8 @@ from typing import List, Tuple, Union, Optional
 import cv2
 import numpy as np
 
-BGRImage = np.ndarray
+from dt_computer_vision.camera import BGRImage
+
 Color = Union[Tuple[float], List[float]]
 
 

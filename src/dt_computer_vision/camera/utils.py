@@ -39,10 +39,6 @@ def fill_holes(rmapx, rmapy):
     deltas0 = [x for x in deltas0 if norm(x) <= R]
     deltas0.sort(key=norm)
 
-    # TODO: huh? remove it
-    def get_deltas():
-        return deltas0
-
     holes = set()
 
     for i, j in itertools.product(list(range(H)), list(range(W))):
@@ -56,7 +52,7 @@ def fill_holes(rmapx, rmapy):
         for i, j in list(holes):
             # there is nan
             nholes += 1
-            for di, dj in get_deltas():
+            for di, dj in deltas0:
                 u = i + di
                 v = j + dj
                 if (0 <= u < H) and (0 <= v < W):

@@ -5,9 +5,7 @@ import cv2
 import numpy as np
 
 from .types import Detections, ColorRange
-
-BGRImage = np.ndarray
-HSVImage = np.ndarray
+from ..camera import BGRImage, HSVImage
 
 
 class LineDetectorInterface(ABC):

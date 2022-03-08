@@ -2,10 +2,9 @@
 
 import numpy as np
 
-from dt_computer_vision.ground_projection.types import \
-    GroundPoint, \
-    NormalizedImagePoint, \
-    CameraModel
+from dt_computer_vision.camera.types import NormalizedImagePoint, CameraModel
+
+from .types import GroundPoint
 
 
 class GroundProjector:
@@ -42,40 +41,39 @@ class GroundProjector:
 
     def vector2ground(self, point: NormalizedImagePoint) -> GroundPoint:
         """
-        Projects a normalized point (``[0, 1] X [0, 1]``) to the ground
+        Projects a normalized point (``[-1, 1] X [-1, 1]``) to the ground
         plane using the homography matrix.
 
         Args:
             point (:py:class:`Point`): A :py:class:`Point` object in normalized coordinates.
 
         Returns:
-            :py:class:`Point` : A :py:class:`Point` object on the ground plane.
+            :py:class:`GroundPoint` : A :py:class:`GroundPoint` object on the ground plane.
 
         """
-        uv_raw = np.array([point.x, point.y, 1.0])
-        ground_point = np.dot(self.H, uv_raw)
-        x = ground_point[0] / ground_point[2]
-        y = ground_point[1] / ground_point[2]
-        return GroundPoint(x, y)
+        point = np.array([point.x, point.y, 1.0])
+        ground_point = np.dot(self.H, point)
+        ground_point = ground_point / ground_point[2]
+        return GroundPoint(*ground_point[:2])
 
     def ground2vector(self, point: GroundPoint) -> NormalizedImagePoint:
         """
-        Projects a point on the ground plane to a normalized pixel (``[0, 1] X [0, 1]``) using the
+        Projects a point on the ground plane to a normalized pixel (``[-1, 1] X [-1, 1]``) using the
         homography matrix.
 
         Args:
             point (:py:class:`Point`): A :py:class:`Point` object on the ground plane.
 
         Returns:
-            :py:class:`Point` : A :py:class:`Point` object in normalized coordinates.
+            :py:class:`NormalizedImagePoint` : A point in normalized coordinates.
 
         """
         ground_point = np.array([point.x, point.y, 1.0])
         image_point = np.dot(self.Hinv, ground_point)
         image_point = image_point / image_point[2]
-        return NormalizedImagePoint(image_point[0], image_point[1])
+        return NormalizedImagePoint(*image_point[:2])
 
-    def project_to_ground(self, point: NormalizedImagePoint) -> GroundPoint:
+    def distorted_to_ground(self, point: NormalizedImagePoint) -> GroundPoint:
         """
         Creates a :py:class:`ground_projection.types.GroundPoint` object from a normalized point
         message from a distorted image. It converts it to pixel coordinates and rectifies it.
@@ -90,16 +88,8 @@ class GroundProjector:
             reference frame.
 
         """
-        # point to pixel [distorted point -> distorted pixel]
-        # pixel = self.camera.vector2pixel(point)
-        # rectify [distorted pixel -> rectified pixel]
-        # pixel_rect = self.camera.rectifier.rectify_point(point)
-
-        #
+        # rectify point [distorted point -> rectified point]
         point_rect = self.camera.rectifier.rectify_point(point)
-
-        # convert back to point [rectified pixel -> rectified point]
-        # point_rect = self.camera.pixel2vector(pixel_rect)
         # project on ground [rectified point -> ground point]
         ground_pt = self.vector2ground(point_rect)
         # ---

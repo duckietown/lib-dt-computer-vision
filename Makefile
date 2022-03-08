@@ -73,7 +73,12 @@ test-docker: build
 	docker run -it --rm -v $(PWD)/out:/library/out:rw $(tag) make test
 
 test-docker-mounted-src:
-	docker run -it --rm -v $(PWD)/out:/library/out:rw -v $(PWD)/src:/library/src:ro $(tag) make test
+	docker run -it --rm \
+		-v $(PWD)/out:/library/out:rw \
+		-v $(PWD)/assets:/library/assets:ro \
+		-v $(PWD)/src:/library/src:ro \
+		$(tag) \
+		make test
 
 
 run:
