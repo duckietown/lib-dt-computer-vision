@@ -1,17 +1,30 @@
+dt_computer_vision package
+==========================
 
-Pondcleaner package
-===================
 
-Pond cleaner
--------------
+Camera
+------
 
-.. automodule:: duckietown_pondcleaner.pondcleaner
+.. automodule:: dt_computer_vision.camera
    :members:
 
 
+Anti Instagram
+--------------
 
-Main entry points
+.. automodule:: dt_computer_vision.anti_instagram
+   :members:
+
+
+Line Detection
+--------------
+
+.. automodule:: dt_computer_vision.line_detection
+   :members:
+
+
+Ground Projection
 -----------------
 
-.. automodule:: duckietown_pondcleaner.demo
+.. automodule:: dt_computer_vision.ground_projection
    :members:

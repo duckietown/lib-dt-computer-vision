@@ -4,8 +4,8 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from dt_computer_vision.line_detector import LineDetector, ColorRange, Detections
-from dt_computer_vision.line_detector.rendering import draw_segments
+from dt_computer_vision.line_detection import LineDetector, ColorRange, Detections
+from dt_computer_vision.line_detection.rendering import draw_segments
 
 this_dir: str = os.path.dirname(os.path.realpath(__file__))
 this_lib: str = os.path.basename(this_dir)

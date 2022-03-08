@@ -11,7 +11,7 @@ from dt_computer_vision.camera.calibration.extrinsics.chessboard import find_cor
 from dt_computer_vision.camera.types import CameraModel
 from dt_computer_vision.ground_projection.ground_projector import GroundProjector
 from dt_computer_vision.ground_projection.types import GroundPoint
-from dt_computer_vision_tests.line_detector_tests.test_detection import assets_dir
+from dt_computer_vision_tests.line_detection_tests.test_detection import assets_dir
 
 
 # NOTE: this is from the real `myrobot` duckiebot at TTIC, March 2022
