@@ -1,8 +1,14 @@
+from typing import Dict
+
 import cv2
 import numpy as np
 
+from dt_computer_vision.line_detection import Detections, ColorRange
 
-def draw_segments(image, detections):
+BGRImage = np.ndarray
+
+
+def draw_segments(image: BGRImage, detections: Dict[ColorRange, Detections]):
     """
 
     Draws a set of line segment detections on an image.
