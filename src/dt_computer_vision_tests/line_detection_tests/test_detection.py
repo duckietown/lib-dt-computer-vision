@@ -34,7 +34,7 @@ os.makedirs(output_dir, exist_ok=True)
 def detect_color(image: np.ndarray, color: str) -> Tuple[Detections, np.ndarray]:
     detector = LineDetector()
     color_range: ColorRange = ColorRange.fromDict(colors[color])
-    detections: Detections = detector.detect(image, color_range)
+    detections: Detections = detector.detect(image, [color_range])[0]
     image0_dets = draw_segments(image, {color_range: detections})
     return detections, image0_dets
 

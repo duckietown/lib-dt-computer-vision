@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import Tuple
+from typing import Tuple, List
 
 import cv2
 import numpy as np
@@ -252,21 +252,22 @@ class LineDetector(LineDetectorInterface):
 
         return centers, normals
 
-    def detect(self, image: BGRImage, color: ColorRange) -> Detections:
+    def detect(self, image: BGRImage, colors: List[ColorRange]) -> List[Detections]:
         """
         Detects the line segments in the currently set image that occur in and the edges of
         the regions of the image
         that are within the provided colour ranges.
 
         Args:
-            image (:obj:`numpy array`):             BGR image as numpy array
-            color (:py:class:`ColorRange`):   A :py:class:`ColorRange` object specifying
-                                                    the desired color.
+            image (:obj:`numpy array`):         BGR image as numpy array
+            colors (:obj:`List[ColorRange]`):   A list of :py:class:`ColorRange` objects specifying
+                                                the desired colors to detect.
 
         Returns:
-            :py:class:`Detections`: A :py:class:`Detections` object with the map of regions
-                                    containing the desired colors, and the detected lines,
-                                    together with their center points and normals,
+            :obj:`List[Detections]`:    A list of :py:class:`Detections` objects, one for each
+                                        color range given, containing the detected lines for the
+                                        corresponding color.
+
         """
         # find edges
         edges = self.find_edges(image,
@@ -275,13 +276,19 @@ class LineDetector(LineDetectorInterface):
                                 self.canny_aperture_size)
         # bgr -> hsv
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        # color filter
-        map, edge_color = self.color_filter(hsv, color, edges, self.dilation_kernel_size)
-        # hough lines
-        lines = self.hough_line(edge_color, self.hough_threshold,
-                                self.hough_min_line_length,
-                                self.hough_max_line_gap)
-        # find center and normals
-        centers, normals = self.find_normal(map, lines)
-        # pack detections and return them
-        return Detections(lines=lines, normals=normals, map=map, centers=centers)
+        # detect colors
+        output: List[Detections] = []
+        for color in colors:
+            # color filter
+            map, edge_color = self.color_filter(hsv, color, edges, self.dilation_kernel_size)
+            # hough lines
+            lines = self.hough_line(edge_color, self.hough_threshold,
+                                    self.hough_min_line_length,
+                                    self.hough_max_line_gap)
+            # find center and normals
+            centers, normals = self.find_normal(map, lines)
+            # pack detections
+            dets = Detections(lines=lines, normals=normals, map=map, centers=centers)
+            output.append(dets)
+        # ---
+        return output
