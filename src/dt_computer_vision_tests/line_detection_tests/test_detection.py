@@ -47,7 +47,7 @@ def test_image_0_white():
     # ---
     detections, image0_dets = detect_color(image0, color)
     # ---
-    assert len(detections.lines) == expected_detections
+    assert detections.lines.shape[0] == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
     cv2.imwrite(image0_dets_fpath, image0_dets)
 
@@ -60,7 +60,7 @@ def test_image_0_yellow():
     # ---
     detections, image0_dets = detect_color(image0, color)
     # ---
-    assert len(detections.lines) == expected_detections
+    assert detections.lines.shape[0] == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
     cv2.imwrite(image0_dets_fpath, image0_dets)
 
@@ -73,6 +73,42 @@ def test_image_0_red():
     # ---
     detections, image0_dets = detect_color(image0, color)
     # ---
-    assert len(detections.lines) == expected_detections
+    assert detections.lines.shape[0] == expected_detections
     image0_dets_fpath: str = os.path.join(output_dir, f"image0_{color}.jpg")
     cv2.imwrite(image0_dets_fpath, image0_dets)
+
+
+def test_image_empty_white():
+    color: str = "white"
+    expected_detections: int = 0
+    image = np.zeros((400, 400, 3), dtype=np.uint8)
+    # ---
+    detections, image_dets = detect_color(image, color)
+    # ---
+    assert detections.lines.shape[0] == expected_detections
+    assert detections.normals.shape[0] == expected_detections
+    assert detections.centers.shape[0] == expected_detections
+
+
+def test_image_empty_yellow():
+    color: str = "yellow"
+    expected_detections: int = 0
+    image = np.zeros((400, 400, 3), dtype=np.uint8)
+    # ---
+    detections, image_dets = detect_color(image, color)
+    # ---
+    assert detections.lines.shape[0] == expected_detections
+    assert detections.normals.shape[0] == expected_detections
+    assert detections.centers.shape[0] == expected_detections
+
+
+def test_image_empty_red():
+    color: str = "red"
+    expected_detections: int = 0
+    image = np.zeros((400, 400, 3), dtype=np.uint8)
+    # ---
+    detections, image_dets = detect_color(image, color)
+    # ---
+    assert detections.lines.shape[0] == expected_detections
+    assert detections.normals.shape[0] == expected_detections
+    assert detections.centers.shape[0] == expected_detections

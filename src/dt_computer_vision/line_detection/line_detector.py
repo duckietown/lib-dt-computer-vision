@@ -161,7 +161,7 @@ class LineDetector(LineDetectorInterface):
         if lines is not None:
             lines = lines.reshape((-1, 4))  # it has an extra dimension
         else:
-            lines = []
+            lines = np.array([])
 
         return lines
 
@@ -228,8 +228,8 @@ class LineDetector(LineDetectorInterface):
                  * :obj:`numpy array`: An ``Nx2`` array where each row represents the normal
                  of a line. If no lines were detected returns an empty list.
         """
-        normals = []
-        centers = []
+        normals = np.array([])
+        centers = np.array([])
         if len(lines) > 0:
             length = np.sum((lines[:, 0:2] - lines[:, 2:4]) ** 2, axis=1, keepdims=True) ** 0.5
             dx = 1.0 * (lines[:, 3:4] - lines[:, 1:2]) / length
