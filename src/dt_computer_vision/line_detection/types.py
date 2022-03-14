@@ -1,22 +1,23 @@
+import dataclasses
+
 import numpy as np
 import cv2
 
 
+@dataclasses.dataclass
 class Detections:
     """
-    This is a data class that can be used to store the results of the line detection procedure performed
-    by :py:class:`LineDetector`.
+    This is a data class that can be used to store the results of the line detection procedure
+    performed by :py:class:`LineDetector`.
     """
-
-    def __init__(self, lines, normals, centers, map):
-        # An ``Nx4`` array with every row representing a line ``[x1, y1, x2, y2]``
-        self.lines = lines
-        # An ``Nx2`` array with every row representing the normal of a line ``[nx, ny]``
-        self.normals = normals
-        # An ``Nx2`` array with every row representing the center of a line ``[cx, cy]``
-        self.centers = centers
-        # A binary map of the area from which the line segments were extracted
-        self.map = map
+    # An ``Nx4`` array with every row representing a line ``[x1, y1, x2, y2]``
+    lines: np.ndarray
+    # An ``Nx2`` array with every row representing the normal of a line ``[nx, ny]``
+    normals: np.ndarray
+    # An ``Nx2`` array with every row representing the center of a line ``[cx, cy]``
+    centers: np.ndarray
+    # A binary map of the area from which the line segments were extracted
+    map: np.ndarray
 
 
 class ColorRange:
