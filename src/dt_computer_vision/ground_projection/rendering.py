@@ -10,7 +10,7 @@ from dt_computer_vision.ground_projection.types import GroundPoint
 Color = Tuple[int, int, int]
 Segment = Tuple[GroundPoint, GroundPoint]
 
-grid_size = 8
+grid_size = 6
 # everything here is calibrated for a 1000x1000 image
 scale = 1000
 s_segment_thickness = 10
@@ -151,7 +151,9 @@ def debug_image(segments: Dict[Color, List[Segment]], size: Tuple[int, int],
     for color, lines in segments.items():
         for start, end in lines:
             # only draw segments that are within the grid
-            if np.any(np.abs([start.x, start.y, end.x, end.y]) > (half_grid_size / 10)):
+            if np.any(np.abs([start.y, end.y]) > (half_grid_size / 10)):
+                continue
+            if np.any(np.abs([start.x, end.x]) > (grid_size / 10)):
                 continue
             # draw segment
             cv2.line(
