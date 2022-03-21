@@ -63,29 +63,22 @@ class Rectifier:
         )
         self._rectify_inited = True
 
-    def rectify_point(self, point: NormalizedImagePoint) -> NormalizedImagePoint:
+    def rectify_pixel(self, point: Pixel) -> Pixel:
         """
         Args:
-            point (:py:class:`NormalizedImagePoint`): A point in normalized image coordinates.
+            point (:py:class:`Pixel`): A point in pixel coordinates.
 
         Applies the rectification specified by camera parameters
-        :math:`K` and and :math:`D` to point (u, v) and returns the
+        :math:`K` and and :math:`D` to the given pixel (u, v) and returns the
         pixel coordinates of the rectified point.
         """
-
-        # TODO: use numpy instead
-        # src = cv2.CreateMat(1, 2, cv2.CV_64FC1)
-        # cv2.SetData(src, array.array('d', list(uv_raw)), 8 * 2)
-        # src = cv2.Reshape(src, 2)
-        # dst = cv2.CloneMat(src)
-
-        src = point.as_array().reshape((1, 1, 2))
+        src = point.as_array().reshape((1, 1, 2)).astype(float)
         dst = cv2.undistortPoints(src,
                                   self.camera.K,
                                   self.camera.D,
                                   R=self.camera.R,
                                   P=self.camera.P)
-        return NormalizedImagePoint(*dst[0, 0])
+        return Pixel(*dst[0, 0])
 
     def rectify(self, image: BGRImage, interpolation=cv2.INTER_NEAREST):
         """

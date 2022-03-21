@@ -33,7 +33,7 @@ class ColorRange:
         high (:obj:`numpy array`): An ``Nx3`` array with the high ends of ``N`` colour ranges.
     """
 
-    def __init__(self, low, high):
+    def __init__(self, low: np.ndarray, high: np.ndarray):
         self.low = low
         self.high = high
 
