@@ -1,0 +1,2 @@
+class NoCornersFoundException(Exception):
+    pass

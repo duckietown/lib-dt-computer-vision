@@ -113,7 +113,7 @@ class CameraModel:
     K: np.ndarray
     D: np.ndarray
     P: np.ndarray
-    R: np.ndarray = None
+    R: Optional[np.ndarray] = None
     H: Optional[np.ndarray] = None
 
     rectifier: Rectifier = dataclasses.field(init=False)

@@ -3,6 +3,7 @@ from typing import List
 import cv2
 
 from .boards import CalibrationBoard
+from .exceptions import NoCornersFoundException
 from ... import BGRImage, Pixel
 
 
@@ -32,8 +33,8 @@ def find_corners(image: BGRImage, board: CalibrationBoard) -> List[Pixel]:
     # find corners in the image
     ret, corners = cv2.findChessboardCorners(grayscale, corners_num, cv2.CALIB_CB_ADAPTIVE_THRESH)
     if not ret:
-        raise RuntimeError("No corners found in image, or the corners couldn't be rearranged. "
-                           "Make sure that the camera is positioned correctly.")
+        raise NoCornersFoundException("No corners found in image, or the corners couldn't be "
+                                      "rearranged. Make sure the camera is positioned correctly.")
 
     # refine corners' position
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
