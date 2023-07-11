@@ -74,6 +74,7 @@ setup(
     install_requires=install_requires,
     package_dir={"": "src"},
     packages=find_packages("./src"),
+    include_package_data=True,
     long_description=description,
     version=version,
 )
