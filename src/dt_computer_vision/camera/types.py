@@ -7,6 +7,7 @@ import numpy as np
 from .utils import invert_map, ensure_ndarray
 
 BGRImage = np.ndarray
+RGBImage = np.ndarray
 HSVImage = np.ndarray
 
 
@@ -22,7 +23,7 @@ class Point:
         return np.array([self.x, self.y])
 
     def __repr__(self):
-        return f"P({self.x}, {self.y})"
+        return f"P({round(self.x, 4)}, {round(self.y, 4)})"
 
 
 class Pixel(Point):
@@ -80,7 +81,7 @@ class Rectifier:
                                   P=self.camera.P)
         return Pixel(*dst[0, 0])
 
-    def rectify(self, image: BGRImage, interpolation=cv2.INTER_NEAREST):
+    def rectify(self, image: BGRImage, interpolation=cv2.INTER_NEAREST) -> BGRImage:
         """
         Undistorts an image.
         While cv2.INTER_NEAREST is faster, use cv2.INTER_CUBIC for higher quality.

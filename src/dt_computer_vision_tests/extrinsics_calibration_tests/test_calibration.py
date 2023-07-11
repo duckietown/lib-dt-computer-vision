@@ -45,9 +45,10 @@ def test_extrinsics_calibration_image1():
     # estimate homography
     H = estimate_homography(corners, board, camera)
     # project the principal point onto the plane
-    ground_pp = np.dot(H, [0, 0, 1])[:2]
+    ground_pp = np.dot(H, [0, 0, 1])
+    ground_pp = (ground_pp / ground_pp[2])[:2]
     # compute error estimate
-    error = np.abs(ground_pp - expected_pp).sum()
+    error = np.linalg.norm(ground_pp - expected_pp)
     print(f"Error is ~{error * 100:.2f}cm.")
-    # make sure the error is within 4cm
-    assert error <= 0.04
+    # make sure the error is within 3cm
+    assert error <= 0.03

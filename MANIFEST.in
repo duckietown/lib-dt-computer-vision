@@ -22,4 +22,6 @@ prune out
 
 #@ add local below
 
+include src/dt_computer_vision/camera/calibration/extrinsics/assets/*.png
+
 prune src/dt_computer_vision_tests
