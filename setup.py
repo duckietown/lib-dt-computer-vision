@@ -31,18 +31,11 @@ def get_version_from_source(filename):
 
 version = get_version_from_source(f"src/{package_name.replace('-', '_')}/__init__.py")
 
-# read project dependencies
-# NO - dependencies.txt is for testing dependiences - EVERYTHING PINNED
-# The requirements here must be broad.
-# dependencies_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dependencies.txt')
-# with open(dependencies_file, 'rt') as fin:
-#     dependencies = list(filter(lambda line: not line.startswith('#'), fin.read().splitlines()))
-
 install_requires = [
     # opencv4
-    "opencv-python-headless",
-    # numpy (1.21.5 is the last numpy supporting Python 3.7)
-    "numpy<=1.21.5"
+    "opencv-python-headless<=4.8.1.78",
+    # numpy
+    "numpy<=1.26.2"
 ]
 tests_require = []
 

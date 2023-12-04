@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM duckietown/dt-commons:ente
 
 # working directory
 WORKDIR /library
@@ -13,10 +13,5 @@ RUN python3 -m pip install -r requirements.txt
 # copy everything
 COPY . .
 
-# show list of files copied
-RUN find .
-
 # install dependencies
-RUN pipdeptree
-RUN python setup.py develop
-
+RUN python3 setup.py develop
