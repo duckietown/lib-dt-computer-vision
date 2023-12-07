@@ -41,14 +41,15 @@ def draw_grid_image(
     Generates a grid image with distances from the robot's origin.
 
     Args:
-        size (:obj:`tuple`): Size of the image to draw
+        size (tuple): Size of the image to draw
 
-        grid_size (:obj:`int`): Number of cells to draw
-        scale (:obj:`int`): Scale of the image
-        s_padding (:obj:`int`): Padding of the grid
-        s_grid_thickness (:obj:`dict`): Grid lines thickness
-        s_font_size (:obj:`np.ndarray`): Font size
-        s_font_thickness (:obj:`int`): Font thickness
+        grid_size (int):                     Number of cells to draw
+        scale (int):                         Scale of the image
+        s_padding (int):                     Padding of the grid
+        s_grid_thickness (dict):             Grid lines thickness
+        s_font_size (np.ndarray):            Font size
+        s_font_thickness (int):              Font thickness
+        ticks_every (Union[int, Tuple[int, int]]):
 
     Returns:
         :obj:`numpy array`: an OpenCV image

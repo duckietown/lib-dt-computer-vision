@@ -36,6 +36,21 @@ class NormalizedImagePoint(Point):
     pass
 
 
+class Size(Point):
+
+    def __repr__(self):
+        return f"S({round(self.x, 4)}, {round(self.y, 4)})"
+
+
+@dataclasses.dataclass
+class RegionOfInterest:
+    """
+    A generic 2D region.
+    """
+    origin: Point
+    size: Size
+
+
 class Rectifier:
     """
     Handles the Rectification operations.
