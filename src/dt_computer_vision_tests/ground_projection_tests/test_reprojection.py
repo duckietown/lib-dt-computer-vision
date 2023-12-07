@@ -49,7 +49,7 @@ def test_reprojection_error():
     image_rect = camera.rectifier.rectify(image)
 
     # find corners
-    corners = find_corners(image_rect, board)
+    corners = find_corners(image_rect, board, win_size=11)
     print(f"Found {len(corners)} corners.")
     assert len(corners) == (board.columns - 1) * (board.rows - 1)
 
