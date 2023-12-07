@@ -211,9 +211,9 @@
        y="0"><tspan
          x="117.13672"
          y="511.28318"
-         id="tspan1264"><tspan
+         id="tspan1359"><tspan
            style="text-align:justify;stroke:none"
-           id="tspan1262">Extrinsics Calibration Validation</tspan></tspan></text>
+           id="tspan1357">Extrinsics Calibration Validation</tspan></tspan></text>
     <path
        style="fill:none;fill-opacity:1;stroke:#e5e5e5;stroke-width:0.253965;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0.56146;paint-order:markers fill stroke"
        d="M 180.16981,12.222529 V 125.45202"
@@ -251,7 +251,7 @@
          y="0"><tspan
            x="1113.6475"
            y="606.53125"
-           id="tspan1266">Save</tspan></text>
+           id="tspan1361">Save</tspan></text>
     </g>
     <g
        id="g22416"
@@ -274,7 +274,7 @@
          y="0"><tspan
            x="1109.335"
            y="606.53125"
-           id="tspan1268">Close</tspan></text>
+           id="tspan1363">Close</tspan></text>
     </g>
     <text
        xml:space="preserve"
@@ -285,15 +285,15 @@
        y="0"><tspan
          x="117.13672"
          y="520.57497"
-         id="tspan1272"><tspan
+         id="tspan1367"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:justify;stroke:none"
-           id="tspan1270">- Keep the Duckiebot on the calibration pattern
+           id="tspan1365">- Keep the Duckiebot on the calibration pattern
 </tspan></tspan><tspan
          x="117.13672"
          y="604.83669"
-         id="tspan1276"><tspan
+         id="tspan1371"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:justify;stroke:none"
-           id="tspan1274">- Make sure the projected image to the right is a top-view of the chessboard pattern</tspan></tspan></text>
+           id="tspan1369">- Make sure the projected image to the right is a top-view of the chessboard pattern</tspan></tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.09369387,0,0,0.09369387,174.38033,89.586998)"
@@ -303,9 +303,9 @@
        y="0"><tspan
          x="623.80371"
          y="509.77497"
-         id="tspan1280"><tspan
+         id="tspan1375"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke:none"
-           id="tspan1278">Homography projection</tspan></tspan></text>
+           id="tspan1373">Homography projection</tspan></tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.09369387,0,0,0.09369387,8.2219446,89.586998)"
@@ -315,9 +315,9 @@
        y="0"><tspan
          x="754.93652"
          y="509.77497"
-         id="tspan1284"><tspan
+         id="tspan1379"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke:none"
-           id="tspan1282">Robot's view</tspan></tspan></text>
+           id="tspan1377">Robot's view</tspan></tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458334,0,0,0.26458333,-0.79220661,24.403421)"
@@ -325,9 +325,9 @@
        style="font-size:26.6667px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect336-6);display:inline;fill:none;stroke:#e6e6e6;stroke-width:5.06667;stroke-opacity:0.996078;paint-order:markers fill stroke"><tspan
          x="811.70427"
          y="169.28519"
-         id="tspan1288"><tspan
+         id="tspan1383"><tspan
            style="font-family:'Nimbus Roman';-inkscape-font-specification:'Nimbus Roman, ';fill:#fffefe;stroke:none"
-           id="tspan1286">Generating homography maps...</tspan></tspan></text>
+           id="tspan1381">Generating homography maps...</tspan></tspan></text>
     <text
        xml:space="preserve"
        transform="matrix(0.26458334,0,0,0.26458333,-168.53811,24.403421)"
@@ -335,8 +335,8 @@
        style="font-size:26.6667px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect434);display:inline;fill:none;stroke:#e6e6e6;stroke-width:5.06667;stroke-opacity:0.996078;paint-order:markers fill stroke"><tspan
          x="811.70427"
          y="169.28519"
-         id="tspan1292"><tspan
+         id="tspan1387"><tspan
            style="font-family:'Nimbus Roman';-inkscape-font-specification:'Nimbus Roman, ';fill:#fffefe;stroke:none"
-           id="tspan1290">Generating homography maps...</tspan></tspan></text>
+           id="tspan1385">Generating homography maps...</tspan></tspan></text>
   </g>
 </svg>
