@@ -207,6 +207,40 @@ class CameraModel:
         y = (pixel.y - self.cy) / self.fy
         return NormalizedImagePoint(x, y)
 
+    def cropped(self, top: int = 0, right: int = 0, bottom: int = 0, left: int = 0) -> 'CameraModel':
+        K1: np.ndarray = np.array([
+            [self.fx,        0,   self.cx - left],
+            [0,        self.fy,    self.cy - top],
+            [0,              0,                1],
+        ])
+        shape: Tuple[int, int] = (self.width - left - right, self.height - top - bottom)
+        K1rect, _ = cv2.getOptimalNewCameraMatrix(K1, self.D, shape, 0, shape)
+        P1rect = np.hstack((K1rect, [[0], [0], [1]]))
+        return CameraModel(
+            width=shape[0],
+            height=shape[1],
+            K=K1,
+            D=self.D,
+            # TODO: we are not testing this rigorously (e.g., unit tests)
+            P=P1rect
+        )
+
+    def scaled(self, s: float) -> 'CameraModel':
+        K1: np.ndarray = self.K * s
+        K1[2, 2] = 1.0
+        w, h = round(self.width * s), round(self.height * s)
+        shape: Tuple[int, int] = (w, h)
+        K1rect, _ = cv2.getOptimalNewCameraMatrix(K1, self.D, shape, 0, shape)
+        P1rect = np.hstack((K1rect, [[0], [0], [1]]))
+        return CameraModel(
+            width=w,
+            height=h,
+            K=K1,
+            D=self.D,
+            # TODO: we are not testing this rigorously (e.g., unit tests)
+            P=P1rect
+        )
+
     def pixel2independent(self, pixel: Pixel) -> ResolutionIndependentImagePoint:
         """
         Converts a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
