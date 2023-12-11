@@ -36,6 +36,15 @@ class NormalizedImagePoint(Point):
     pass
 
 
+@dataclasses.dataclass
+class ResolutionIndependentImagePoint(NormalizedImagePoint):
+
+    def __post_init__(self):
+        if self.x < 0 or self.x > 1 or self.y < 0 or self.y > 1:
+            raise ValueError("Values of x and y must be within the range [0, 1] for objects of type "
+                             "ResolutionIndependentImagePoint.")
+
+
 class Size(Point):
 
     def __repr__(self):
@@ -158,6 +167,10 @@ class CameraModel:
     def cy(self) -> float:
         return self.K[1, 2]
 
+    @property
+    def principal_point(self) -> Pixel:
+        return Pixel(self.cx, self.cy)
+
     def get_shape(self) -> Tuple[int, int]:
         """returns (height, width) of image"""
         return self.height, self.width
@@ -187,9 +200,56 @@ class CameraModel:
             pixel (:py:class:`Point`): A :py:class:`Point` object in image coordinates.
 
         Returns:
-            :py:class:`Point` : A :py:class:`Point` object in normalized coordinates.
+            :py:class:`NormalizedImagePoint` : Corresponding normalized coordinates.
 
         """
         x = (pixel.x - self.cx) / self.fx
         y = (pixel.y - self.cy) / self.fy
         return NormalizedImagePoint(x, y)
+
+    def pixel2independent(self, pixel: Pixel) -> ResolutionIndependentImagePoint:
+        """
+        Converts a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
+        (from image to resolution-independent coordinates).
+
+        Args:
+            pixel (:py:class:`Pixel`): A :py:class:`Pixel` object in image coordinates.
+
+        Returns:
+            :py:class:`ResolutionIndependentImagePoint` : Corresponding resolution-independent coordinates.
+
+        """
+        x = pixel.x / (self.width - 1)
+        y = pixel.y / (self.height - 1)
+        return ResolutionIndependentImagePoint(x, y)
+
+    def homography_vector2independent(self) -> np.ndarray:
+        """
+        Homography converting normalized coordinates ``[-∞,+∞] X [-∞,+∞]`` to resolution-independent
+        coordinates ``[0, 1] X [0, 1]``.
+
+        Returns:
+            :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
+        """
+        # top-left and bottom-right corner of the image in normalized coordinates
+        tl: NormalizedImagePoint = self.pixel2vector(Pixel(0, 0))
+        br: NormalizedImagePoint = self.pixel2vector(Pixel(self.width - 1, self.height - 1))
+        # scaling factors along X and Y
+        sx = 1.0 / (br.x - tl.x)
+        sy = 1.0 / (br.y - tl.y)
+        # ---
+        return np.array([
+            [sx, 0, -tl.x * sx],
+            [0, sy, -tl.y * sy],
+            [0,  0,          1]
+        ])
+
+    def homography_independent2vector(self) -> np.ndarray:
+        """
+        Homography converting resolution-independent coordinates ``[0, 1] X [0, 1]`` to normalized
+        coordinates ``[-∞,+∞] X [-∞,+∞]``.
+
+        Returns:
+            :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
+        """
+        return np.linalg.inv(self.homography_vector2independent())

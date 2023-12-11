@@ -1,5 +1,5 @@
 import itertools
-from typing import Tuple
+from typing import Tuple, Any, Optional
 
 import numpy as np
 
@@ -67,5 +67,8 @@ def fill_holes(rmapx, rmapy):
             break
 
 
-def ensure_ndarray(obj):
-    return obj if isinstance(obj, np.ndarray) else np.array(obj)
+def ensure_ndarray(obj: Any, shape: Optional[Tuple[int, ...]] = None):
+    obj = obj if isinstance(obj, np.ndarray) else np.array(obj)
+    if shape is not None:
+        assert obj.shape == shape, f"Expected shape {shape}, received {obj.shape} instead."
+    return obj
