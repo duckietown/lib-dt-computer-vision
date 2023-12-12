@@ -222,7 +222,8 @@ class CameraModel:
             K=K1,
             D=self.D,
             # TODO: we are not testing this rigorously (e.g., unit tests)
-            P=P1rect
+            P=P1rect,
+            H=self.H
         )
 
     def scaled(self, s: float) -> 'CameraModel':
