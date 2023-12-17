@@ -74,6 +74,7 @@ test-docker: build
 
 test-docker-mounted-src:
 	docker run -it --rm \
+		-e DT_SUPERUSER=1 \
 		-v $(PWD)/out:/library/out:rw \
 		-v $(PWD)/assets:/library/assets:ro \
 		-v $(PWD)/src:/library/src:ro \

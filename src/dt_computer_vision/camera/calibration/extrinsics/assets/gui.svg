@@ -9,7 +9,7 @@
    id="svg5"
    inkscape:version="1.2.2 (b0a8486, 2022-12-01)"
    sodipodi:docname="gui.svg"
-   inkscape:export-filename="gui.png"
+   inkscape:export-filename="gui_active.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -27,17 +27,57 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.914906"
-     inkscape:cx="949.27784"
-     inkscape:cy="509.88845"
-     inkscape:window-width="3766"
+     inkscape:zoom="1.1119672"
+     inkscape:cx="505.41059"
+     inkscape:cy="510.35678"
+     inkscape:window-width="3770"
      inkscape:window-height="2096"
-     inkscape:window-x="74"
+     inkscape:window-x="70"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="g1503"
+     inkscape:pageshadow="2" />
   <defs
      id="defs2">
+    <rect
+       x="1045.8591"
+       y="578.21826"
+       width="214.12313"
+       height="64.200243"
+       id="rect10520" />
+    <linearGradient
+       id="linearGradient3112-3">
+      <stop
+         style="stop-color:#ccff00;stop-opacity:1;"
+         offset="0"
+         id="stop3345" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3112">
+      <stop
+         style="stop-color:#ccff00;stop-opacity:1;"
+         offset="0"
+         id="stop3342" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3138"
+       inkscape:swatch="gradient">
+      <stop
+         style="stop-color:#fec20b;stop-opacity:1;"
+         offset="0"
+         id="stop3134" />
+      <stop
+         style="stop-color:#ccff00;stop-opacity:0;"
+         offset="1"
+         id="stop3136" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3112-3-6">
+      <stop
+         style="stop-color:#ccff00;stop-opacity:1;"
+         offset="0"
+         id="stop3110" />
+    </linearGradient>
     <rect
        x="117.1374"
        y="464.64536"
@@ -56,9 +96,51 @@
        width="826.0943"
        height="97.636589"
        id="rect10019" />
+    <rect
+       x="1045.8591"
+       y="578.21826"
+       width="214.12313"
+       height="64.200243"
+       id="rect21854" />
+    <rect
+       x="117.1374"
+       y="464.64536"
+       width="826.0943"
+       height="97.636589"
+       id="rect435" />
+    <rect
+       x="117.1374"
+       y="464.64536"
+       width="826.0943"
+       height="97.636589"
+       id="rect1227-3" />
+    <rect
+       x="1045.8591"
+       y="578.21826"
+       width="214.12313"
+       height="64.200243"
+       id="rect1505" />
+    <rect
+       x="711.04895"
+       y="145.69101"
+       width="541.89606"
+       height="227.98788"
+       id="rect336" />
+    <rect
+       x="711.04895"
+       y="145.69101"
+       width="541.89606"
+       height="227.98788"
+       id="rect908" />
+    <rect
+       x="711.04895"
+       y="145.69101"
+       width="541.89606"
+       height="227.98788"
+       id="rect916" />
   </defs>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="Root"
      inkscape:groupmode="layer"
      id="layer1">
     <rect
@@ -111,11 +193,11 @@
        style="font-size:48px;font-family:'Postmaster Bold';-inkscape-font-specification:'Postmaster Bold, ';white-space:pre;shape-inside:url(#rect1063);display:inline;fill:#edeaea;fill-opacity:1;stroke:#ff9344;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        x="120.95312"
        y="0"><tspan
-         x="319.29395"
+         x="202.79785"
          y="509.77497"
-         id="tspan13463"><tspan
+         id="tspan1068"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle;stroke:none"
-           id="tspan13461">Corners Detected</tspan></tspan></text>
+           id="tspan1066">Corners Detected (Current)</tspan></tspan></text>
     <rect
        style="fill:#232323;fill-opacity:1;stroke:#fec20b;stroke-width:0.299584;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        id="rect1169"
@@ -131,15 +213,23 @@
        style="font-size:48px;font-family:'Postmaster Bold';-inkscape-font-specification:'Postmaster Bold, ';white-space:pre;shape-inside:url(#rect1227);display:inline;fill:#edeaea;fill-opacity:1;stroke:#ff9344;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        x="120.95312"
        y="0"><tspan
-         x="313.83301"
+         x="197.33691"
          y="509.77497"
-         id="tspan13467"><tspan
+         id="tspan1072"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle;stroke:none"
-           id="tspan13465">Reprojection Error</tspan></tspan></text>
+           id="tspan1070">Reprojection Error (Current)</tspan></tspan></text>
     <path
        style="fill:none;fill-opacity:1;stroke:#e5e5e5;stroke-width:0.253965;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0.56146;paint-order:markers fill stroke"
        d="M 180.16981,12.222529 V 125.45202"
        id="path4929" />
+    <rect
+       style="display:inline;fill:#fec20b;fill-opacity:1;stroke:none;stroke-width:0.877947;stroke-opacity:0.996078;paint-order:markers fill stroke"
+       id="rect601"
+       width="27.439974"
+       height="2.2709048"
+       x="263.24081"
+       y="148.28995"
+       inkscape:label="Connection Save - Error" />
     <rect
        style="fill:#232323;fill-opacity:1;stroke:#fec20b;stroke-width:0.299584;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        id="rect10013"
@@ -148,17 +238,113 @@
        x="184.66628"
        y="140.04633"
        ry="3.293982" />
+    <g
+       id="g22420"
+       transform="matrix(1.0002596,0,0,1.0043892,-0.31679034,-0.12922167)"
+       inkscape:export-filename="gui_active.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:label="Save button"
+       style="display:inline">
+      <rect
+         style="mix-blend-mode:normal;fill:#fec20b;fill-opacity:1;fill-rule:nonzero;stroke:#00000b;stroke-width:0.204138;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         id="rect1000"
+         width="38.150066"
+         height="17.709352"
+         x="286.09482"
+         y="139.84688"
+         ry="1.3327844" />
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,0,-8.9958338)"
+         id="text10518"
+         style="font-style:normal;font-weight:normal;font-size:32px;line-height:1.25;font-family:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect10520);display:inline;fill:#1a1a1a;fill-opacity:1;stroke:none"
+         x="46.708984"
+         y="0"><tspan
+           x="1113.6475"
+           y="606.53125"
+           id="tspan1074">Save</tspan></text>
+    </g>
+    <g
+       id="g22416"
+       transform="matrix(1.0002596,0,0,1.0043892,-0.31679034,-0.24530157)"
+       inkscape:label="Cancel button">
+      <rect
+         style="mix-blend-mode:normal;fill:#ff5555;fill-opacity:1;fill-rule:nonzero;stroke:#00000b;stroke-width:0.204138;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+         id="rect21850"
+         width="38.150066"
+         height="17.709352"
+         x="286.09482"
+         y="166.30516"
+         ry="1.3327844" />
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,0,17.462502)"
+         id="text21852"
+         style="font-style:normal;font-weight:normal;font-size:32px;line-height:1.25;font-family:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect21854);display:inline;fill:#1a1a1a;fill-opacity:1;stroke:none"
+         x="46.708984"
+         y="0"><tspan
+           x="1098.7178"
+           y="606.53125"
+           id="tspan1076">Cancel</tspan></text>
+    </g>
     <text
        xml:space="preserve"
-       transform="matrix(0.09369387,0,0,0.09369387,175.32822,99.28133)"
-       id="text10017"
-       style="font-size:48px;font-family:'Postmaster Bold';-inkscape-font-specification:'Postmaster Bold, ';white-space:pre;shape-inside:url(#rect10019);display:inline;fill:#edeaea;fill-opacity:1;stroke:#ff9344;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       transform="matrix(0.09369387,0,0,0.09369387,175.79228,99.060473)"
+       id="text1225-6"
+       style="font-size:48px;font-family:'Postmaster Bold';-inkscape-font-specification:'Postmaster Bold, ';white-space:pre;shape-inside:url(#rect1227-3);display:inline;fill:#edeaea;fill-opacity:1;stroke:#ff9344;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
        x="120.95312"
        y="0"><tspan
-         x="337.48145"
+         x="158.86426"
          y="509.77497"
-         id="tspan13471"><tspan
+         id="tspan1080"><tspan
            style="font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;text-anchor:middle;stroke:none"
-           id="tspan13469">Placement Error</tspan></tspan></text>
+           id="tspan1078">Reprojection Error (Best so far)</tspan></tspan></text>
+    <g
+       id="g1503"
+       transform="matrix(1.0002596,0,0,1.0043892,-0.31679034,-0.12922167)"
+       inkscape:export-filename="gui_active.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:label="Save button (inactive)">
+      <rect
+         style="mix-blend-mode:normal;fill:#fec20b;fill-opacity:0.25261003;fill-rule:nonzero;stroke:#00000b;stroke-width:0.204138;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.33370194;paint-order:markers fill stroke"
+         id="rect1497"
+         width="38.150066"
+         height="17.709352"
+         x="286.09482"
+         y="139.84688"
+         ry="1.3327844" />
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26458333,0,0,0.26458333,0,-8.9958338)"
+         id="text1501"
+         style="font-style:normal;font-weight:normal;font-size:32px;line-height:1.25;font-family:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect1505);display:inline;fill:#1a1a1a;fill-opacity:1;stroke:none"
+         x="46.708984"
+         y="0"><tspan
+           x="1113.6475"
+           y="606.53125"
+           id="tspan1082">Save</tspan></text>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26451467,0,0,0.2634271,-0.47529288,24.425435)"
+         id="text334"
+         style="font-size:26.6667px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect336);display:inline;fill:none;stroke:#e6e6e6;stroke-width:5.06667;stroke-opacity:0.996078;paint-order:markers fill stroke"><tspan
+           x="800.45095"
+           y="169.28519"
+           id="tspan1086"><tspan
+             style="font-family:'Nimbus Roman';-inkscape-font-specification:'Nimbus Roman, ';fill:#fffefe;stroke:none"
+             id="tspan1084">Projected corners will appear here</tspan></tspan></text>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.26451467,0,0,0.2634271,-169.76463,24.425435)"
+         id="text914"
+         style="font-size:26.6667px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;white-space:pre;shape-inside:url(#rect916);display:inline;fill:none;stroke:#e6e6e6;stroke-width:5.06667;stroke-opacity:0.996078;paint-order:markers fill stroke"><tspan
+           x="836.05084"
+           y="169.28519"
+           id="tspan1090"><tspan
+             style="font-family:'Nimbus Roman';-inkscape-font-specification:'Nimbus Roman, ';fill:#fffefe;stroke:none"
+             id="tspan1088">Waiting for camera frame...</tspan></tspan></text>
+    </g>
   </g>
 </svg>

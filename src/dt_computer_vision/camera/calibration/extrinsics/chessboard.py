@@ -1,8 +1,10 @@
+from itertools import product
 from typing import List, Tuple
 
 import cv2
 import numpy as np
 
+from ...types import RegionOfInterest
 from ....ground_projection.types import GroundPoint
 from .boards import CalibrationBoard
 from .exceptions import NoCornersFoundException
@@ -11,7 +13,7 @@ from ... import BGRImage, Pixel, CameraModel
 from ... import NormalizedImagePoint
 
 
-def find_corners(image: BGRImage, board: CalibrationBoard) -> List[Pixel]:
+def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) -> List[Pixel]:
     """
     Finds the corners of the given board in the given image.
 
@@ -22,6 +24,7 @@ def find_corners(image: BGRImage, board: CalibrationBoard) -> List[Pixel]:
         image (:obj:``numpy array``): A color (3-channel) OpenCV image
         board (:obj:``dt_computer_vision.camera.calibration.extrinsics.boards.CalibrationBoard``):
             The calibration board to look for
+        win_size (:obj:``int``):    Window size for the corner detection
 
     Returns:
         :obj:``list[dt_computer_vision.camera.Pixel]``: Corners detected in the given image,
@@ -44,7 +47,8 @@ def find_corners(image: BGRImage, board: CalibrationBoard) -> List[Pixel]:
 
     # refine corners' position
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
-    corners = cv2.cornerSubPix(grayscale, corners, winSize=(11, 11), zeroZone=(-1, -1), criteria=criteria)
+    winSize = (win_size, win_size)
+    corners = cv2.cornerSubPix(grayscale, corners, winSize=winSize, zeroZone=(-1, -1), criteria=criteria)
 
     # return corners as Pixels
     corners = [Pixel(c[0], c[1]) for c in corners[:, 0]]
@@ -64,35 +68,25 @@ def get_ground_corners_and_error(
     image_corners: List[NormalizedImagePoint] = [camera.pixel2vector(c) for c in corners]
 
     # ground points, easily reconstructable given a known board
-    ground_corners: List[GroundPoint] = []
-    board_offset = np.array([board.x_offset, board.y_offset])
-    square_size = board.square_size
-    for r in range(board.rows - 1):
-        for c in range(board.columns - 1):
-            src_corner = np.array([(r + 1) * square_size, (c + 1) * square_size]) + board_offset
-            ground_corners.append(GroundPoint(*src_corner))
-    # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
-    ground_corners = ground_corners[::-1]
+    ground_corners: List[GroundPoint] = board.corners()
 
     # make sure the corners match in size
     assert len(image_corners) == len(ground_corners)
 
     errors: List[float] = []
     ground_corners_projected: List[GroundPoint] = []
-    for i, (image_corner, ground_corner) in enumerate(zip(image_corners, ground_corners)):
+    for image_corner, ground_corner in zip(image_corners, ground_corners):
         # project image point onto the ground plane
         ground_corner_projected = np.dot(H, [image_corner.x, image_corner.y, 1])
         # remove homogeneous coordinate
         ground_corner_projected = (ground_corner_projected / ground_corner_projected[2])[:2]
         # wrap x,y into a GroundPoint object
-        ground_corner_projected_p = GroundPoint(
-            round(ground_corner_projected[0], 4), round(ground_corner_projected[1], 4)
-        )
+        ground_corner_projected_p = GroundPoint(ground_corner_projected[0], ground_corner_projected[1])
+        # store corner
         ground_corners_projected.append(ground_corner_projected_p)
         # compute error
         error = np.linalg.norm(ground_corner_projected - ground_corner.as_array())
         errors.append(error)
-        # store corner
 
     return image_corners, ground_corners, ground_corners_projected, errors
 
@@ -112,3 +106,51 @@ def compute_placement_error(
     placement_error = np.average(np.concatenate((horizontal_principal_errors, vertical_principal_errors)))
     # ---
     return placement_error
+
+
+def compute_homography_maps(camera: CameraModel, H: np.ndarray, ppm: int, roi: RegionOfInterest) -> Tuple[np.ndarray, np.ndarray, BGRImage, Tuple[int, int]]:
+    """
+    Takes in a `camera`, an homography `H`, and produces two maps `map_x` and `map_y` that can be used
+    with `cv2.remap()` to project a region of interest `roi` the image. The `roi` is specified in meters.
+    The density of pixels per meter is specified using the `ppm` argument.
+
+    Returns the two maps, `map_x` and `map_y`, a binary `mask` image indicating the missing pixels, and the
+    `shape` in pixels of the extracted region of interest `roi`.
+    """
+    dst_size: Tuple[int, int] = (int(roi.size.y * ppm), int(roi.size.x * ppm))
+    h, w = dst_size
+
+    mapx = np.zeros((h, w), dtype=np.float32)
+    mapy = np.zeros((h, w), dtype=np.float32)
+    mask = np.ones((h, w), dtype=np.uint8)
+
+    # populate maps
+    for i, j in product(range(camera.height), range(camera.width)):
+        # pixel in homogeneous coordinates
+        p: NormalizedImagePoint = camera.pixel2vector(Pixel(j, i))
+        # project image point onto the ground plane
+        g = np.dot(H, [p.x, p.y, 1])
+
+        # remove homogeneous coordinate
+        g = (g / g[2])[:2]
+
+        # filter according to the given ROI
+        if g[0] < roi.origin.x or g[1] < roi.origin.y:
+            continue
+
+        # shift to the origin of the ROI
+        g[0] -= roi.origin.x
+        g[1] -= roi.origin.y
+
+        # pixels density (pixels per meter)
+        g *= ppm
+
+        # populate map for this pixel
+        gx, gy = int(g[0]), int(g[1])
+
+        if 0 <= gx < w and 0 <= gy < h:
+            mapx[gy, gx] = j
+            mapy[gy, gx] = i
+            mask[gy, gx] = 0
+    # ---
+    return mapx, mapy, mask, dst_size
