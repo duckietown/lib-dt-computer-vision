@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import List, Tuple, Optional, Union
 
 import numpy as np
+import requests
 import yaml
 
 if typing.TYPE_CHECKING:
@@ -164,3 +165,34 @@ class HomographyToolkit:
         # write file
         with open(fpath, "wt") as fout:
             fout.write(fcontent)
+
+    @staticmethod
+    def save_to_http(
+            H: ResolutionIndependentHomography,
+            url: str,
+            date: datetime = None,
+    ):
+        if not isinstance(H, ResolutionIndependentHomography):
+            raise ValueError(
+                "Only resolution-independent homographies can be stored to disk. Please, "
+                "convert your homography to a ResolutionIndependentHomography first."
+            )
+        # create file content
+        fcontent: str = HomographyToolkit.FILE_CONTENT.format(
+            yaml=yaml.safe_dump(
+                {
+                    "version": HomographyToolkit.DEFAULT_VERSION,
+                    "format": HomographyToolkit.DEFAULT_FORMAT,
+                    "date": (date or datetime.today()).isoformat(),
+                    "homography": H.tolist(),
+                },
+                sort_keys=False
+            )
+        )
+        # send POST request
+        response = requests.post(url, data=fcontent)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Failed to upload homography to '{url}'. The server returned the following error:\n\n"
+                f"{response.text}"
+            )
