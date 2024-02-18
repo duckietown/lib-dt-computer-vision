@@ -82,6 +82,7 @@ class Rectifier:
         H = self.camera.height
         mapx = np.ndarray(shape=(H, W, 1), dtype="float32")
         mapy = np.ndarray(shape=(H, W, 1), dtype="float32")
+        # noinspection PyUnresolvedReferences
         self.mapx, self.mapy = cv2.initUndistortRectifyMap(
             self.camera.K, self.camera.D, self.camera.R, self.camera.P,
             (W, H), cv2.CV_32FC1, mapx, mapy
@@ -288,3 +289,26 @@ class CameraModel:
             :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
         """
         return np.linalg.inv(self.homography_vector2independent())
+
+    def to_native_objects(self) -> dict:
+        return {
+            'width': self.width,
+            'height': self.height,
+            'K': self.K.tolist(),
+            'D': self.D.tolist(),
+            'P': self.P.tolist(),
+            'R': self.R.tolist() if self.R is not None else None,
+            'H': self.H.tolist() if self.H is not None else None
+        }
+
+    @classmethod
+    def from_native_objects(cls, data) -> 'CameraModel':
+        return CameraModel(
+            width=data['width'],
+            height=data['height'],
+            K=np.array(data['K']),
+            D=np.array(data['D']),
+            P=np.array(data['P']),
+            R=np.array(data['R']) if 'R' in data and data['R'] is not None else None,
+            H=np.array(data['H']) if data['H'] is not None else None
+        )
