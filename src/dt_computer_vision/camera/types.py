@@ -279,6 +279,20 @@ class CameraModel:
             [0, sy, -tl.y * sy],
             [0,  0,          1]
         ])
+        
+    def homography_pixel2vector(self) -> np.ndarray:
+        """
+        Homography converting a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
+        (from image to normalized coordinates).
+
+        Returns:
+            :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
+        """        
+        return np.array([
+            [1/self.fx,         0, -self.cx/self.fx],
+            [0,         1/self.fy, -self.cy/self.fy],
+            [0,                 0,                1]
+        ])
 
     def homography_independent2vector(self) -> np.ndarray:
         """
