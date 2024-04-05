@@ -38,7 +38,7 @@ def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) ->
     corners_num = (board.columns - 1, board.rows - 1)
 
     # find corners in the image
-    ret, corners = cv2.findChessboardCorners(grayscale, corners_num, cv2.CALIB_CB_ADAPTIVE_THRESH)
+    ret, corners = cv2.findChessboardCornersSB(image, corners_num, flags=cv2.CALIB_CB_EXHAUSTIVE)
     if not ret:
         raise NoCornersFoundException(
             "No corners found in image, or the corners couldn't be "
