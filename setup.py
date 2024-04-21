@@ -35,7 +35,7 @@ install_requires = [
     # opencv4
     "opencv-python-headless<=4.9.0.80",
     # numpy
-    "numpy<=1.26.2",
+    "numpy<=1.26.4",
     # requests
     "requests<=2.31.0",
 ]
