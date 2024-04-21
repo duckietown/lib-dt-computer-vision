@@ -33,7 +33,7 @@ version = get_version_from_source(f"src/{package_name.replace('-', '_')}/__init_
 
 install_requires = [
     # opencv4
-    "opencv-python-headless<=4.8.1.78",
+    "opencv-python-headless<=4.9.0.80",
     # numpy
     "numpy<=1.26.2",
     # requests
