@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 import cv2
 import numpy as np
+import yaml
 
 from .utils import invert_map, ensure_ndarray
 
@@ -326,3 +327,17 @@ class CameraModel:
             R=np.array(data['R']) if 'R' in data and data['R'] is not None else None,
             H=np.array(data['H']) if data['H'] is not None else None
         )
+        
+    @classmethod
+    def from_ros_calibration(self, filestream):
+        """
+        Import the camera calibration parameters from a ROS calibration file.
+        """
+        data = yaml.safe_load(filestream)
+        K = np.array(data['camera_matrix']['data']).reshape(3, 3)
+        D = np.array(data['distortion_coefficients']['data'])
+        P = np.array(data['projection_matrix']['data']).reshape(3, 4)
+        R = np.array(data['rectification_matrix']['data']).reshape(3, 3)
+        width = data['image_width']
+        height = data['image_height']
+        return CameraModel(width, height, K, D, P, R)
