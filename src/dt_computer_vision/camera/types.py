@@ -135,6 +135,15 @@ class Rectifier:
 
 @dataclasses.dataclass
 class CameraModel:
+    """
+    Class describing a camera model.
+    
+    The following conventions for coordinates are used (W: image width, H: image height):
+    
+    - resolution-dependent: [0, W] x [0, H]      (or "image coordinates")
+    - resolution-independent: [0, 1] x [0, 1]
+    - normalized coordinates: [-inf, +inf] x [-inf, +inf]
+    """
     width: int
     height: int
     K: np.ndarray
@@ -177,6 +186,10 @@ class CameraModel:
         """returns (height, width) of image"""
         return self.height, self.width
 
+######################################
+# TODO: #5 [-1, 1] X [-1, 1] are not coordinates defined in the coordinate convention.
+#     We should deprecate this method and release a new version freezing the API. 
+
     def vector2pixel(self, vec: NormalizedImagePoint) -> Pixel:
         """
         Converts a ``[-1,1] X [-1,1]`` representation to ``[0, W] X [0, H]``
@@ -196,7 +209,7 @@ class CameraModel:
     def pixel2vector(self, pixel: Pixel) -> NormalizedImagePoint:
         """
         Converts a ``[0,W] X [0,H]`` representation to ``[-1, 1] X [-1, 1]``
-        (from image to normalized coordinates).
+        (from resolution-dependent to normalized coordinates).
 
         Args:
             pixel (:py:class:`Point`): A :py:class:`Point` object in image coordinates.
@@ -208,6 +221,8 @@ class CameraModel:
         x = (pixel.x - self.cx) / self.fx
         y = (pixel.y - self.cy) / self.fy
         return NormalizedImagePoint(x, y)
+
+########################################
 
     def cropped(self, top: int = 0, right: int = 0, bottom: int = 0, left: int = 0) -> 'CameraModel':
         K1: np.ndarray = np.array([
@@ -247,7 +262,7 @@ class CameraModel:
     def pixel2independent(self, pixel: Pixel) -> ResolutionIndependentImagePoint:
         """
         Converts a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
-        (from image to resolution-independent coordinates).
+        (from resolution-dependent to resolution-independent coordinates).
 
         Args:
             pixel (:py:class:`Pixel`): A :py:class:`Pixel` object in image coordinates.
@@ -284,7 +299,7 @@ class CameraModel:
     def homography_pixel2vector(self) -> np.ndarray:
         """
         Homography converting a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
-        (from image to normalized coordinates).
+        (from resolution-dependent to normalized coordinates).
 
         Returns:
             :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
