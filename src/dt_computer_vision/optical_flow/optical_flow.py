@@ -37,8 +37,11 @@ class OpticalFlow:
             debug_viz_on (bool, optional): Flag to enable debug visualization. Defaults to False.
 
         Returns:
-            tuple: A tuple containing the flow vectors, visualization image (if debug visualization is enabled), debug information string, and a flag indicating if the flow vector has been published.
-
+            disp_arr (numpy.ndarray): Array of displacements.
+            velocities_arr (numpy.ndarray): Array of velocities.
+            locations (list): List of locations.
+            vis (numpy.ndarray): The debug visualization image.
+            debug_str (str): The debug string.
         """
         scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
         image_cv = cv2.resize(image, (scaled_height, scaled_width), interpolation=cv2.INTER_NEAREST)
@@ -47,9 +50,11 @@ class OpticalFlow:
         if debug_viz_on:
             vis = image_cv.copy()
 
-        has_published_flow = False
-        displacement_vector = None
         debug_str = ""
+
+        disp_arr = np.array([(0,0),])
+        velocities_arr = np.array([(0,0),])
+        locations = [(0,0), ]
 
         if len(self.tracks) > 0:
             img0, img1 = self.prev_gray, frame_gray
@@ -64,6 +69,8 @@ class OpticalFlow:
             new_tracks = []
             speeds = []  # Unit: pixel / sec
             displacements = []  # Unit: pixel
+            locations = []  # Locations of the vectors
+
             for tr, (x, y), good_flag in zip(self.tracks, p1.reshape(-1, 2), good):
                 if not good_flag:
                     continue
@@ -75,6 +82,7 @@ class OpticalFlow:
                 v_est = self.single_track_speed_est(track=tr, delta_t=delta_t)
                 if v_est is not None:
                     speeds.append(v_est)
+                    locations.append((x, y))
 
                 est = self.single_track_est(track=tr)
                 if est is not None:
@@ -83,21 +91,19 @@ class OpticalFlow:
                 if debug_viz_on:
                     cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
             self.tracks = new_tracks
+            
 
             if len(speeds) > 0:
-                speeds_arr = np.array(speeds)
-                m_vx, m_vy = np.mean(speeds_arr, axis=0)
-                std_v = np.std(speeds_arr, axis=0)
-                velocity_vector = (m_vx, m_vy, 0.0)
-                debug_str = f"vx: {m_vx:>10.4f}, vy: {m_vy:>10.4f}, stddev: {std_v}\n"
+                velocities_arr = np.array(speeds)
+                m_vx, m_vy = np.mean(velocities_arr, axis=0)
+                std_v = np.std(velocities_arr, axis=0)
+                debug_str = f"vx: {m_vx:>10.4f} [px/s], vy: {m_vy:>10.4f} [px/s], stddev: {std_v} [px/s]\n"
 
             if len(displacements) > 0:
                 disp_arr = np.array(displacements)
                 m_x, m_y = np.mean(disp_arr, axis=0)
                 std_xy = np.std(disp_arr, axis=0)
-                debug_str += f"x: {m_x:>10.4f}, y: {m_y:>10.4f}, stddev: {std_xy}\n"
-                displacement_vector = (m_x, m_y, 0.0)
-                has_published_flow = True
+                debug_str += f"x: {m_x:>10.4f} [px], y: {m_y:>10.4f} [px], stddev: {std_xy} [px]\n"
 
             if debug_viz_on:
                 cv2.polylines(vis, [np.int32(tr) for tr in self.tracks], False, (0, 255, 0))
@@ -115,7 +121,7 @@ class OpticalFlow:
         self.frame_idx += 1
         self.prev_gray = frame_gray
 
-        return disp_arr, speeds_arr, vis if debug_viz_on else None, debug_str, has_published_flow
+        return disp_arr, velocities_arr, locations, vis if debug_viz_on else None, debug_str
 
     @staticmethod
     def single_track_speed_est(track, delta_t):
