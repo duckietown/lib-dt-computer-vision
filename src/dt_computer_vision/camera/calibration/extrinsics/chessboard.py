@@ -64,7 +64,7 @@ GroundPointsProjected = List[GroundPoint]
 def get_ground_corners_and_error(
     camera: CameraModel, corners: List[Pixel], board: CalibrationBoard, H: np.ndarray
 ) -> Tuple[ImagePoints, GroundPointsComputed, GroundPointsProjected, List[float]]:
-    # image corners, detected above
+    # normalize image corners, detected above
     image_corners: List[NormalizedImagePoint] = [camera.pixel2vector(c) for c in corners]
 
     # ground points, easily reconstructable given a known board
@@ -115,7 +115,7 @@ def compute_homography_maps(camera: CameraModel, H: np.ndarray, ppm: int, roi: R
     The density of pixels per meter is specified using the `ppm` argument.
 
     Returns the two maps, `map_x` and `map_y`, a binary `mask` image indicating the missing pixels, and the
-    `shape` in pixels of the extracted region of interest `roi`.
+    `shape` `[H x W]` in pixels of the extracted region of interest `roi`.
     """
     dst_size: Tuple[int, int] = (int(roi.size.y * ppm), int(roi.size.x * ppm))
     h, w = dst_size

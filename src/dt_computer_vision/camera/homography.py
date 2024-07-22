@@ -172,6 +172,21 @@ class HomographyToolkit:
             url: str,
             date: datetime = None,
     ):
+        """
+        Uploads a resolution-independent homography to a remote server using a HTTP POST request.
+        :param H: the homography to upload
+        :param url: the URL to upload the homography to
+        :param date: the date to associate with the homography (if None, the current date is used)
+        
+        The format of the yaml file is:
+        
+        ```
+        version: "2"
+        format: "resolution-independent"
+        date: "2021-01-01T12:00:00"
+        homography: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        ```
+        """
         if not isinstance(H, ResolutionIndependentHomography):
             raise ValueError(
                 "Only resolution-independent homographies can be stored to disk. Please, "
