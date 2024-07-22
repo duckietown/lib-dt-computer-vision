@@ -216,7 +216,7 @@ class CameraModel:
 
     def pixel2vector(self, pixel: Pixel) -> NormalizedImagePoint:
         """
-        Converts a ``[0,W] X [0,H]`` representation to ``[-1, 1] X [-1, 1]``
+        Converts a ``[0,W] X [0,H]`` representation to ``[-inf,+inf] X [-inf,+inf]``
         (from resolution-dependent to normalized coordinates).
 
         Args:
