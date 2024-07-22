@@ -352,7 +352,7 @@ class CameraModel:
         )
         
     @classmethod
-    def from_ros_calibration(self, filestream):
+    def from_ros_calibration(self, filestream, alpha = 0.0):
         """
         Import the camera calibration parameters from a ROS calibration file.
         """
@@ -363,4 +363,10 @@ class CameraModel:
         R = np.array(data['rectification_matrix']['data']).reshape(3, 3)
         width = data['image_width']
         height = data['image_height']
+        
+        if alpha > 0.0:
+            # Compute the new camera matrix
+            K, _ = cv2.getOptimalNewCameraMatrix(K, D, (width, height), alpha)
+            P = np.hstack((K, [[0], [0], [0]]))
+    
         return CameraModel(width, height, K, D, P, R)
