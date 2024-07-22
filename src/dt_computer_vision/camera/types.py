@@ -25,7 +25,15 @@ class Point:
 
     def __repr__(self):
         return f"P({round(self.x, 4)}, {round(self.y, 4)})"
+    
+    def __add__(self, other: 'Point') -> 'Point':
+        return Point(self.x + other.x, self.y + other.y)
 
+    def __sub__(self, other: 'Point') -> 'Point':
+        return Point(self.x - other.x, self.y - other.y)
+
+    def __div__(self, scalar: float) -> 'Point':
+        return Point(self.x / scalar, self.y / scalar)
 
 class Pixel(Point):
 
