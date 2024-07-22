@@ -10,6 +10,7 @@ from .utils import invert_map, ensure_ndarray
 BGRImage = np.ndarray
 RGBImage = np.ndarray
 HSVImage = np.ndarray
+GRAYImage = np.ndarray
 
 
 @dataclasses.dataclass
