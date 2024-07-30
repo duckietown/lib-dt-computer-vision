@@ -55,7 +55,7 @@ description = """
     underline=underline,
 )
 
-packages = find_packages("./src")
+packages = find_packages("./src", include=["lib_dt_computer_vision_tests", "lib_dt_computer_vision_tests.*"])
 
 print("The following packages were found:\n\t - " + "\n\t - ".join(packages) + "\n")
 
@@ -68,7 +68,7 @@ setup(
     tests_require=tests_require,
     install_requires=install_requires,
     package_dir={"": "src"},
-    packages=find_packages("./src"),
+    packages=packages,
     include_package_data=True,
     long_description=description,
     version=version,
