@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+from dt_computer_vision.camera.types import CameraModel, Pixel
+from dt_computer_vision.ground_projection.ground_projector import GroundProjector
+
 
 class OpticalFlow:
     def __init__(self, track_len, detect_interval, resize_scale):
@@ -27,7 +30,7 @@ class OpticalFlow:
             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
         )
 
-    def process_image(self, image, delta_t, debug_viz_on=False):
+    def compute_motion_vectors(self, image, delta_t, debug_viz_on=False):
         """
         Process the input image using optical flow algorithm.
 
@@ -37,12 +40,13 @@ class OpticalFlow:
             debug_viz_on (bool, optional): Flag to enable debug visualization. Defaults to False.
 
         Returns:
-            disp_arr (numpy.ndarray): Array of displacements.
-            velocities_arr (numpy.ndarray): Array of velocities.
-            locations (list): List of locations.
+            disp_arr (numpy.ndarray): Array of displacements in [pixels] (detected_features x 2).
+            velocities_arr (numpy.ndarray): Array of velocities in [pixels/s] (detected_features x 2).
+            locations (list): List of locations (detected_features x 2).
             vis (numpy.ndarray): The debug visualization image.
             debug_str (str): The debug string.
         """
+
         scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
         image_cv = cv2.resize(image, (scaled_height, scaled_width), interpolation=cv2.INTER_NEAREST)
         frame_gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
@@ -122,6 +126,61 @@ class OpticalFlow:
         self.prev_gray = frame_gray
 
         return disp_arr, velocities_arr, locations, vis if debug_viz_on else None, debug_str
+
+    def project_motion_vector_to_ground(self, vector, location, camera : CameraModel, projector : GroundProjector) -> np.ndarray:
+        """
+        Project the motion vector to the ground plane.
+        
+        Args:
+            vector (np.ndarray): The motion vector.
+            location (np.ndarray): The location of the motion vector.
+            camera (CameraModel): The camera model.
+            projector (GroundProjector): The ground projector.
+            
+        Returns:
+            np.ndarray: The motion vector projected to the ground        
+        """
+        
+        # Since we are processing the image in a scaled form, we need to scale the vector back to the original image size
+        scale = 1/self.resize_scale
+    
+        # Compute the absolute position of the head and tail of the displacement vector
+        head = (location + vector)
+        tail = location
+
+        assert len(head) == len(tail) == 2, f"Head: {head}, Tail: {tail}"
+
+        # Rectify the head and tail of the displacement vector, scaling them to the original image size
+        head_px = Pixel(head[0] * scale, head[1] * scale)
+        tail_px = Pixel(tail[0] * scale, tail[1] * scale)
+
+        head = camera.rectifier.rectify_pixel(head_px)
+        tail = camera.rectifier.rectify_pixel(tail_px)
+
+        # Project the head and tail of the displacement vector to the ground
+        head_ground = projector.vector2ground(camera.pixel2vector(head))
+        tail_ground = projector.vector2ground(camera.pixel2vector(tail))
+
+        # Compute the resulting displacement vector
+        vector_ground = head_ground - tail_ground
+
+        return vector_ground.as_array()
+
+    def compute_velocity_vector(self, image_motion_vectors: np.ndarray, locations: np.ndarray, projector: GroundProjector, camera: CameraModel) -> np.ndarray:
+        """
+        Compute a 2D velocity vector (in [m/s]) from a list of motion vectors (in [px/s]), according to the ground projector and camera models given. 
+        """
+        projected_vel_vector_field = []
+
+        # Iterate over each vector in the vector field
+        for vector, loc in zip(image_motion_vectors, locations):
+            vector_ground = self.project_motion_vector_to_ground(vector, loc, camera, projector)
+
+            projected_vel_vector_field.append(vector_ground)
+
+        mean_velocity_vector = np.mean(np.array(projected_vel_vector_field), axis=0)
+        
+        return mean_velocity_vector
 
     @staticmethod
     def single_track_speed_est(track, delta_t):
