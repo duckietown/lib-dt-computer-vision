@@ -66,6 +66,9 @@ setup(
     author_email=maintainer_email,
     url=library_webpage,
     tests_require=tests_require,
+    extras_require={
+        "test": tests_require,
+    },
     install_requires=install_requires,
     package_dir={"": "src"},
     packages=packages,
