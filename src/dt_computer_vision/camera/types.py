@@ -164,9 +164,9 @@ class CameraModel:
     rectifier: Rectifier = dataclasses.field(init=False)
 
     def __post_init__(self):
-        self.K = ensure_ndarray(self.K)
-        self.D = ensure_ndarray(self.D)
-        self.P = ensure_ndarray(self.P)
+        self.K = ensure_ndarray(self.K, shape=(3, 3))
+        self.D = ensure_ndarray(self.D, shape=(5, ))
+        self.P = ensure_ndarray(self.P, shape=(3, 4))
         self.R = np.eye(3) if self.R is None else ensure_ndarray(self.R)
         self.H = None if self.H is None else ensure_ndarray(self.H)
         self.rectifier = Rectifier(self)
