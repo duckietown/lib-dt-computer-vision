@@ -35,7 +35,7 @@ yaml_intrinsics_fpath = os.path.join(
     "calibration-intrinsic-dd24.yaml",
 )
 
-def generate_translated_images_sequence(base_image_fpath: str, frame_count: int = 30) -> List[np.ndarray]:
+def generate_translated_images_sequence(base_image_fpath: str, frame_count) -> List[np.ndarray]:
     image = cv2.imread(base_image_fpath)
 
     # Get the image width and height
