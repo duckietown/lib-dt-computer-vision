@@ -28,17 +28,17 @@ def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) ->
 
     Returns:
         :obj:``list[dt_computer_vision.camera.Pixel]``: Corners detected in the given image,
-        ordered left-right, top-bottom.
+        ordered in row-major order (left-right, top-bottom).
 
     Raises:
         RuntimeError: If no corners were found in image, or the corners couldn't be rearranged
 
     """
     grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    corners_num = (board.columns - 1, board.rows - 1)
+    corners_num = (board.columns, board.rows)
 
     # find corners in the image
-    ret, corners = cv2.findChessboardCornersSB(image, corners_num, flags=cv2.CALIB_CB_EXHAUSTIVE)
+    ret, corners = cv2.findChessboardCorners(image, corners_num)
     if not ret:
         raise NoCornersFoundException(
             "No corners found in image, or the corners couldn't be "
@@ -50,8 +50,8 @@ def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) ->
     winSize = (win_size, win_size)
     corners = cv2.cornerSubPix(grayscale, corners, winSize=winSize, zeroZone=(-1, -1), criteria=criteria)
 
-    # return corners as Pixels
-    corners = [Pixel(c[0], c[1]) for c in corners[:, 0]]
+    # findChessboardCorners gives us the corners in row-major order (N x 1 x 2), return a list of Pixel objects
+    corners = [Pixel(c[0][0], c[0][1]) for c in corners]
     # ---
     return corners
 
