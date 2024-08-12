@@ -1,4 +1,5 @@
 import dataclasses
+from enum import Enum
 from typing import List
 import numpy as np
 
@@ -6,6 +7,9 @@ from ...types import Size, Point
 
 from dt_computer_vision.ground_projection import GroundPoint
 
+class ReferenceFrame(Enum):
+    BOARD=0
+    ROBOT=1
 
 @dataclasses.dataclass
 class CalibrationBoard:
@@ -23,17 +27,22 @@ class CalibrationBoard:
     def chessboard_offset(self) -> Point:
         return Point(self.x_offset, self.y_offset)
 
-    def corners(self) -> List[GroundPoint]:
+    def corners(self, reference_frame : ReferenceFrame = ReferenceFrame.ROBOT) -> List[GroundPoint]:
         # ground points, easily reconstructable given a known board
         ground_corners: List[GroundPoint] = []
-        board_offset = np.array([self.x_offset, self.y_offset])
+        
+        if reference_frame == ReferenceFrame.BOARD:
+            board_offset = np.array([0, 0])
+        elif reference_frame == ReferenceFrame.ROBOT:
+            board_offset = np.array([self.x_offset, self.y_offset])
+
         square_size = self.square_size
-        for r in range(self.rows - 1):
-            for c in range(self.columns - 1):
-                src_corner = np.array([(r + 1) * square_size, (c + 1) * square_size]) + board_offset
-                ground_corners.append(GroundPoint(*src_corner))
+        
         # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
-        ground_corners = ground_corners[::-1]
+        for i in range(self.rows):
+            for j in range(self.columns):
+                object_point = np.array([j * square_size, i * square_size]) + board_offset
+                ground_corners.append(GroundPoint(*object_point))
         # ---
         return ground_corners
 
