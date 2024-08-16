@@ -200,8 +200,8 @@ def top_view_projected_corners(
         cv2.circle(
             image,
             center=(
-                origin_x + int((-corner.y / resolution_x) * cell_size_x),
-                origin_y - int(((corner.x - start_y) / resolution_y) * cell_size_y)
+                origin_x + int((corner.x / resolution_x) * cell_size_x),
+                origin_y + int(((corner.y - start_y) / resolution_y) * cell_size_y)
             ),
             radius=2,
             color=(30, 30, 30),
@@ -212,8 +212,8 @@ def top_view_projected_corners(
         cv2.circle(
             image,
             center=(
-                origin_x + int((-corner.y / resolution_x) * cell_size_x),
-                origin_y - int(((corner.x - start_y) / resolution_y) * cell_size_y)
+                origin_x + int((corner.x / resolution_x) * cell_size_x),
+                origin_y + int(((corner.y - start_y) / resolution_y) * cell_size_y)
             ),
             radius=int((error / resolution_x) * cell_size_x),
             color=(0, 0, 255),
