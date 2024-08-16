@@ -68,7 +68,7 @@ def draw_corners(image: BGRImage, board: CalibrationBoard, corners: List[Pixel])
 
     """
     grayscale = cv2.cvtColor(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
-    corners_num = (board.columns - 1, board.rows - 1)
+    corners_num = (board.columns, board.rows)
     # opencv wants corners in an array of shape [N, 1, 2]
     corners = np.expand_dims([c.as_array() for c in corners], axis=1)
     # draw chessboard on image
