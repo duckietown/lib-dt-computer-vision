@@ -48,16 +48,16 @@ class CalibrationBoard:
 
 
 CalibrationBoard8by6 = CalibrationBoard(
-    rows=6,
-    columns=8,
+    rows=5,
+    columns=7,
     square_size=0.031,
     x_offset=0.16,
     y_offset=-0.124,
 )
 
 CalibrationBoardDD24 = CalibrationBoard(
-    rows=6,
-    columns=8,
+    rows=5,
+    columns=7,
     square_size=0.017,
     x_offset=0.25,
     y_offset=-0.080,
