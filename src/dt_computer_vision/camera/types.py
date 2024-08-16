@@ -201,7 +201,7 @@ class CameraModel:
 
     def vector2pixel(self, vec: NormalizedImagePoint) -> Pixel:
         """
-        Converts a ``[-1,1] X [-1,1]`` representation to ``[0, W] X [0, H]``
+        Converts a ``[-inf,+inf] X [-inf,+inf]`` representation to ``[0, W] X [0, H]``
         (from normalized to image coordinates).
 
         Args:
@@ -307,8 +307,8 @@ class CameraModel:
         
     def homography_pixel2vector(self) -> np.ndarray:
         """
-        Homography converting a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
-        (from resolution-dependent to normalized coordinates).
+        Homography converting a pixel coordinates ``[0,W] X [0,H]`` representation to normalized coordinates
+        ``[-∞,+∞] X [-∞,+∞]``
 
         Returns:
             :py:class:`np.ndarray` : A 3-by-3 matrix implementing the coordinate transformation operation.
@@ -317,6 +317,19 @@ class CameraModel:
             [1/self.fx,         0, -self.cx/self.fx],
             [0,         1/self.fy, -self.cy/self.fy],
             [0,                 0,                1]
+        ])
+
+    def homography_vector2pixel(self) -> np.ndarray:
+        """
+        Homography converting normalized coordinates ``[-∞,+∞] X [-∞,+∞]`` to pixel coordinates ``[0,W] X [0,H]``
+
+        Returns:
+            :py:class:`np.ndarray
+        """
+        return np.array([
+            [self.fx, 0, self.cx],
+            [0, self.fy, self.cy],
+            [0, 0, 1]
         ])
 
     def homography_independent2vector(self) -> np.ndarray:
