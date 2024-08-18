@@ -171,15 +171,13 @@ class HomographyToolkit:
 """
 
     DEFAULT_VERSION: str = "2"
-    DEFAULT_FORMAT: str = "resolution-independent"
     SUPPORTED_VERSIONS: List[str] = [DEFAULT_VERSION]
-    SUPPORTED_FORMATS: List[str] = [DEFAULT_FORMAT]
 
     @staticmethod
     def load_from_disk(
             fpath: str,
             return_date: bool = False
-    ) -> Union[ResolutionIndependentHomography, Tuple[ResolutionIndependentHomography, Optional[datetime]]]:
+    ) -> Union[Homography, Tuple[Homography, Optional[datetime]]]:
         fpath = os.path.abspath(fpath)
         # make sure the file exists
         if not os.path.exists(fpath) or not os.path.isfile(fpath):
@@ -199,17 +197,6 @@ class HomographyToolkit:
                 f"The homography file '{fpath}' uses the version '{version}' which is not supported. "
                 f"Supported versions are: {HomographyToolkit.SUPPORTED_VERSIONS}"
             )
-        # - check format
-        if "format" not in fcontent:
-            raise ValueError(
-                f"Invalid homography file '{fpath}'. The required root key 'format' was not found."
-            )
-        format: str = fcontent["format"].lower().strip()
-        if format not in HomographyToolkit.SUPPORTED_FORMATS:
-            raise ValueError(
-                f"The homography file '{fpath}' uses the format '{format}' which is not supported. "
-                f"Supported formats are: {HomographyToolkit.SUPPORTED_FORMATS}"
-            )
         # - check homography
         if "homography" not in fcontent:
             raise ValueError(
@@ -221,7 +208,7 @@ class HomographyToolkit:
                 f"Invalid homography file '{fpath}'. The root key 'homography' must contain a list of floats."
             )
         # read homography
-        H: ResolutionIndependentHomography = ResolutionIndependentHomography.read(
+        H: Homography = Homography.read(
             np.array(fcontent["homography"]).reshape((3, 3))
         )
         # load time
@@ -234,16 +221,14 @@ class HomographyToolkit:
 
     @staticmethod
     def save_to_disk(
-            H: ResolutionIndependentHomography,
+            H: Homography,
             fpath: str,
             exist_ok: bool = False,
             date: datetime = None,
     ):
-        if not isinstance(H, ResolutionIndependentHomography):
-            raise ValueError(
-                "Only resolution-independent homographies can be stored to disk. Please, "
-                "convert your homography to a ResolutionIndependentHomography first."
-            )
+        if not isinstance(H, Homography):
+            raise ValueError()
+
         fpath = os.path.abspath(fpath)
         # make sure the file does not exists
         if os.path.exists(fpath):
@@ -258,7 +243,6 @@ class HomographyToolkit:
             yaml=yaml.safe_dump(
                 {
                     "version": HomographyToolkit.DEFAULT_VERSION,
-                    "format": HomographyToolkit.DEFAULT_FORMAT,
                     "date": (date or datetime.today()).isoformat(),
                     "homography": H.tolist(),
                 },
@@ -285,7 +269,6 @@ class HomographyToolkit:
         
         ```
         version: "2"
-        format: "resolution-independent"
         date: "2021-01-01T12:00:00"
         homography: [1, 0, 0, 0, 1, 0, 0, 0, 1]
         ```
@@ -300,7 +283,6 @@ class HomographyToolkit:
             yaml=yaml.safe_dump(
                 {
                     "version": HomographyToolkit.DEFAULT_VERSION,
-                    "format": HomographyToolkit.DEFAULT_FORMAT,
                     "date": (date or datetime.today()).isoformat(),
                     "homography": H.tolist(),
                 },
