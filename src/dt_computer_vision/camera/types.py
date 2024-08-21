@@ -5,7 +5,10 @@ import cv2
 import numpy as np
 import yaml
 
+from dt_computer_vision.camera.homography import Homography
+
 from .utils import invert_map, ensure_ndarray
+import yaml
 
 BGRImage = np.ndarray
 RGBImage = np.ndarray
@@ -33,7 +36,7 @@ class Point:
     def __sub__(self, other: 'Point') -> 'Point':
         return Point(self.x - other.x, self.y - other.y)
 
-    def __div__(self, scalar: float) -> 'Point':
+    def __truediv__(self, scalar: float) -> 'Point':
         return Point(self.x / scalar, self.y / scalar)
 
 class Pixel(Point):
@@ -41,6 +44,8 @@ class Pixel(Point):
     def as_integers(self) -> np.ndarray:
         return np.array([int(self.x), int(self.y)], dtype=int)
 
+    def __truediv__(self, scalar: float) -> 'Pixel':
+        return Pixel(self.x / scalar, self.y / scalar)
 
 class NormalizedImagePoint(Point):
     pass
@@ -159,16 +164,19 @@ class CameraModel:
     D: np.ndarray
     P: np.ndarray
     R: Optional[np.ndarray] = None
-    H: Optional[np.ndarray] = None
+    H: Optional[Homography] = None
 
     rectifier: Rectifier = dataclasses.field(init=False)
 
     def __post_init__(self):
+        # TODO: we should validate the input parameters also when we assign an individual attribute 
+        # by using the @property decorator
         self.K = ensure_ndarray(self.K)
         self.D = ensure_ndarray(self.D)
         self.P = ensure_ndarray(self.P)
         self.R = np.eye(3) if self.R is None else ensure_ndarray(self.R)
         self.H = None if self.H is None else ensure_ndarray(self.H)
+        self._H_inv = None if self.H is None else np.linalg.inv(self.H)
         self.rectifier = Rectifier(self)
 
     @property
@@ -259,15 +267,25 @@ class CameraModel:
         shape: Tuple[int, int] = (w, h)
         K1rect, _ = cv2.getOptimalNewCameraMatrix(K1, self.D, shape, 0, shape)
         P1rect = np.hstack((K1rect, [[0], [0], [1]]))
+        
+        scaling_matrix = np.eye(3)
+        scaling_matrix[0, 0] = s
+        scaling_matrix[1, 1] = s
+        
+        
         return CameraModel(
             width=w,
             height=h,
             K=K1,
             D=self.D,
             # TODO: we are not testing this rigorously (e.g., unit tests)
-            P=P1rect
+            P=P1rect,
+            H=self.H @ scaling_matrix @ self._H_inv if self.H is not None else None
         )
-
+        
+    def downsample(self, binning: int) -> 'CameraModel':
+        return self.scaled(1.0 / binning)
+        
     def pixel2independent(self, pixel: Pixel) -> ResolutionIndependentImagePoint:
         """
         Converts a ``[0,W] X [0,H]`` representation to ``[0, 1] X [0, 1]``
@@ -384,3 +402,36 @@ class CameraModel:
             P = np.hstack((K, [[0], [0], [0]]))
     
         return CameraModel(width, height, K, D, P, R)
+    
+    def to_ros_calibration(self, filestream, camera_name = 'camera'):
+        """
+        Export the camera calibration parameters to a ROS calibration file.
+        """
+        data = {
+            'image_width': self.width,
+            'image_height': self.height,
+            'camera_name': camera_name,
+            'camera_matrix': {
+                'rows': 3,
+                'cols': 3,
+                'data': self.K.flatten().tolist()
+            },
+            'distortion_model': 'plumb_bob',
+            'distortion_coefficients': {
+                'rows': 1,
+                'cols': 5,
+                'data': self.D.flatten().tolist()
+            },
+            'rectification_matrix': {
+                'rows': 3,
+                'cols': 3,
+                'data': self.R.flatten().tolist()
+            },
+            'projection_matrix': {
+                'rows': 3,
+                'cols': 4,
+                'data': self.P.flatten().tolist()
+            }
+        }
+        
+        yaml.dump(data, filestream)
