@@ -224,13 +224,14 @@ class OpticalFlow:
         return Pixel(p_ground[0], p_ground[1])
 
 
-    def compute_velocity_vector(self, image_motion_vectors: np.ndarray, locations: np.ndarray, projector: GroundProjector, camera: CameraModel) -> np.ndarray:
+    def compute_velocity_vector(self, motion_vectors: List[Pixel]) -> np.ndarray:
         """
         Compute a 2D velocity vector (in [m/s]) from a list of motion vectors (in [px/s]), according to the ground projector and camera models given. 
         """
-        projected_vel_vector_field = self.project_motion_vectors(image_motion_vectors, locations, camera, projector)
-
-        mean_velocity_vector = np.mean(np.array(projected_vel_vector_field), axis=0)
+        # Convert the motion_vectors to a numpy array
+        motion_vectors_arr = [np.array([v.x, v.y]) for v in motion_vectors]
+        
+        mean_velocity_vector = np.mean(np.array(motion_vectors_arr), axis=0)
         
         return mean_velocity_vector
 
