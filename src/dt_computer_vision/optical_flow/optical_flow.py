@@ -1,10 +1,9 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 import cv2
 import numpy as np
 
 from dt_computer_vision.camera.homography import Homography
 from dt_computer_vision.camera.types import CameraModel, Pixel
-from dt_computer_vision.ground_projection.ground_projector import GroundProjector
 
 
 class OpticalFlow:
@@ -46,8 +45,7 @@ class OpticalFlow:
             debug_str (str): The debug string.
         """
 
-        scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
-        image_cv = cv2.resize(image, (scaled_height, scaled_width), interpolation=cv2.INTER_NEAREST)
+        image_cv = self.scale_image(image)
         frame_gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
 
         debug_str = ""
@@ -119,14 +117,19 @@ class OpticalFlow:
     
         return disp_arr_px, velocities_arr_px, locations_px, debug_str
 
+    def scale_image(self, image : np.ndarray) -> np.ndarray:
+        scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
+        image_cv = cv2.resize(image, (scaled_width, scaled_height), interpolation=cv2.INTER_NEAREST)
+        return image_cv
 
-    def create_debug_visualization(self, image : np.ndarray, locations : List[Pixel], debug_str : str = None, scale : int = 1, motion_vectors : List[Pixel] = None) -> np.ndarray:
+
+    def create_debug_visualization(self, image : np.ndarray, locations : List[Pixel], debug_str : Optional[str] = None, motion_vectors : Optional[List[Pixel]] = None) -> np.ndarray:
         """
         Create a debug visualization image.
 
         Args:
             image (numpy.ndarray): The original image.
-            locations (list): List of locations (detected_features x 2).
+            locations (list): List of locations (detected_features x 2) they have to match the scale of OpticalFlow.resize_scale.
             motion_vectors (list): List of motion vectors (detected_features x 2).
             debug_str (str): The debug string.
             scale (int): Scale factor for the debug image.
@@ -135,28 +138,28 @@ class OpticalFlow:
             vis (numpy.ndarray): The debug visualization image.
         """
 
-        scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
-        image_cv = cv2.resize(image, (scaled_height, scaled_width), interpolation=cv2.INTER_NEAREST)
+        image_cv = self.scale_image(image)
         vis = image_cv.copy()
 
         if motion_vectors is not None:
             for loc, vector in zip(locations, motion_vectors):
-                x, y = loc.x/self.resize_scale, loc.y/self.resize_scale
-                dx, dy = vector.x / self.resize_scale, vector.y / self.resize_scale
+                x, y = loc.x, loc.y
+                dx, dy = vector.x, vector.y
                 cv2.arrowedLine(vis, (int(x), int(y)), (int(x+dx), int(y+dy)), (0, 255, 0), 2)
         else:
             for loc in locations:
-                x, y = loc.x/self.resize_scale, loc.y/self.resize_scale
+                x, y = loc.x, loc.y
                 cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
                 
-        # Scale up the image
-        debug_image = cv2.resize(vis, (scaled_height*scale, scaled_width*scale))
-
         # Embed debug string in the debug image
         if debug_str is not None:
-            cv2.putText(debug_image, debug_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(vis, debug_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        return debug_image
+        # Check that the returned image has the same aspect ratio as the input image
+        assert vis.shape[0] == image.shape[0] * self.resize_scale, "The height of the debug image is not correct."
+        assert vis.shape[1] == image.shape[1] * self.resize_scale, "The width of the debug image is not correct."
+        
+        return vis
 
     def project_motion_vectors(
         self,

@@ -46,6 +46,9 @@ class Pixel(Point):
 
     def __truediv__(self, scalar: float) -> 'Pixel':
         return Pixel(self.x / scalar, self.y / scalar)
+    
+    def __sub__(self, other: 'Pixel') -> 'Pixel':
+        return Pixel(self.x - other.x, self.y - other.y)
 
 class NormalizedImagePoint(Point):
     pass
