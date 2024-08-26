@@ -38,17 +38,28 @@ class Point:
 
     def __truediv__(self, scalar: float) -> 'Point':
         return Point(self.x / scalar, self.y / scalar)
+    
+    def __mul__(self, scalar: float) -> 'Pixel':
+        return Pixel(self.x * scalar, self.y * scalar)
+
+
 
 class Pixel(Point):
 
     def as_integers(self) -> np.ndarray:
         return np.array([int(self.x), int(self.y)], dtype=int)
 
+    def __repr__(self):
+        return f"P({round(self.x, 4)}, {round(self.y, 4)})"
+
     def __truediv__(self, scalar: float) -> 'Pixel':
         return Pixel(self.x / scalar, self.y / scalar)
     
     def __sub__(self, other: 'Pixel') -> 'Pixel':
         return Pixel(self.x - other.x, self.y - other.y)
+    
+    def __mul__(self, scalar: float) -> 'Pixel':
+        return Pixel(self.x * scalar, self.y * scalar)
 
 class NormalizedImagePoint(Point):
     pass
