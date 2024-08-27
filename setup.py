@@ -39,7 +39,10 @@ install_requires = [
     # requests
     "requests<=2.31.0",
 ]
-tests_require = []
+tests_require = [
+    "pytest",
+    "pytest-cov",
+]
 
 # compile description
 underline = "=" * (len(package_name) + len(short_description) + 2)
@@ -55,7 +58,8 @@ description = """
     underline=underline,
 )
 
-packages = find_packages("./src")
+# Assuming your test package is in src/dt_computer_vision_tests
+packages = find_packages("src", include=["dt_computer_vision", "dt_computer_vision.*", "dt_computer_vision_tests", "dt_computer_vision_tests.*"])
 
 print("The following packages were found:\n\t - " + "\n\t - ".join(packages) + "\n")
 
@@ -66,10 +70,18 @@ setup(
     author_email=maintainer_email,
     url=library_webpage,
     tests_require=tests_require,
+    extras_require={
+        "test": tests_require,
+    },
     install_requires=install_requires,
     package_dir={"": "src"},
-    packages=find_packages("./src"),
+    packages=packages,
     include_package_data=True,
+    package_data={
+        # If you need to include specific types of files from the assets directory
+        '': ['assets/*.*'],
+    },
     long_description=description,
     version=version,
+    test_suite='dt_computer_vision_tests',  # Ensure this points to your test package
 )
