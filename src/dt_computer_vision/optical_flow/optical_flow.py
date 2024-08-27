@@ -1,8 +1,9 @@
+from typing import List, Optional, Tuple
 import cv2
 import numpy as np
 
+from dt_computer_vision.camera.homography import Homography
 from dt_computer_vision.camera.types import CameraModel, Pixel
-from dt_computer_vision.ground_projection.ground_projector import GroundProjector
 
 
 class OpticalFlow:
@@ -29,43 +30,34 @@ class OpticalFlow:
             maxLevel=2,
             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03),
         )
-
-    def compute_motion_vectors(self, image, delta_t, debug_viz_on=False):
+    def compute_motion_vectors(self, image, delta_t : float) -> Tuple[List[Pixel], List[Pixel], List[Pixel], str] :
         """
         Process the input image using optical flow algorithm.
 
         Args:
             image (numpy.ndarray): The input image.
             delta_t (float): The time interval between frames.
-            debug_viz_on (bool, optional): Flag to enable debug visualization. Defaults to False.
 
         Returns:
-            disp_arr (numpy.ndarray): Array of displacements in [pixels] (detected_features x 2).
-            velocities_arr (numpy.ndarray): Array of velocities in [pixels/s] (detected_features x 2).
+            disp_arr (List[Pixel]): Array of displacements in [pixels] (detected_features x 2).
+            velocities_arr (List[Pixel]): Array of velocities in [pixels/s] (detected_features x 2).
             locations (list): List of locations (detected_features x 2).
-            vis (numpy.ndarray): The debug visualization image.
             debug_str (str): The debug string.
         """
 
-        scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
-        image_cv = cv2.resize(image, (scaled_height, scaled_width), interpolation=cv2.INTER_NEAREST)
+        image_cv = self.scale_image(image)
         frame_gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
 
-        if debug_viz_on:
-            vis = image_cv.copy()
-
         debug_str = ""
-
-        disp_arr = np.array([(0,0),])
-        velocities_arr = np.array([(0,0),])
-        locations = [(0,0), ]
+        disp_arr = np.array([(0, 0)])
+        velocities_arr = np.array([(0, 0)])
+        locations = [(0, 0)]
 
         if len(self.tracks) > 0:
             img0, img1 = self.prev_gray, frame_gray
             p0 = np.float32([tr[-1] for tr in self.tracks]).reshape(-1, 1, 2)
             p1, _st, _err = cv2.calcOpticalFlowPyrLK(img0, img1, p0, None, **self.lk_params)
             
-            # Check if the optical flow is valid by computing it backwards and comparing the results with the original frame
             p0r, _st, _err = cv2.calcOpticalFlowPyrLK(img1, img0, p1, None, **self.lk_params)
             d = abs(p0 - p0r).reshape(-1, 2).max(-1)
             good = d < 1
@@ -92,25 +84,19 @@ class OpticalFlow:
                 if est is not None:
                     displacements.append(est)
 
-                if debug_viz_on:
-                    cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
             self.tracks = new_tracks
-            
 
             if len(speeds) > 0:
                 velocities_arr = np.array(speeds)
                 m_vx, m_vy = np.mean(velocities_arr, axis=0)
                 std_v = np.std(velocities_arr, axis=0)
-                debug_str = f"vx: {m_vx:>10.4f} [px/s], vy: {m_vy:>10.4f} [px/s], stddev: {std_v} [px/s]\n"
+                debug_str = f"vx:{m_vx:>10.4f}[px/s],vy:{m_vy:>10.4f}[px/s]\n stddev: {std_v} [px/s]\n"
 
             if len(displacements) > 0:
                 disp_arr = np.array(displacements)
                 m_x, m_y = np.mean(disp_arr, axis=0)
                 std_xy = np.std(disp_arr, axis=0)
-                debug_str += f"x: {m_x:>10.4f} [px], y: {m_y:>10.4f} [px], stddev: {std_xy} [px]\n"
-
-            if debug_viz_on:
-                cv2.polylines(vis, [np.int32(tr) for tr in self.tracks], False, (0, 255, 0))
+                debug_str += f"x:{m_x:>10.4f}[px],y:{m_y:>10.4f}[px]\n stddev: {std_xy} [px]\n"
 
         if self.frame_idx % self.detect_interval == 0 or len(self.tracks) == 0:
             mask = np.zeros_like(frame_gray)
@@ -125,60 +111,130 @@ class OpticalFlow:
         self.frame_idx += 1
         self.prev_gray = frame_gray
 
-        return disp_arr, velocities_arr, locations, vis if debug_viz_on else None, debug_str
+        locations_px = [Pixel(*loc) for loc in locations]
+        disp_arr_px = [Pixel(*disp) for disp in disp_arr]
+        velocities_arr_px = [Pixel(*vel) for vel in velocities_arr]
+    
+        return disp_arr_px, velocities_arr_px, locations_px, debug_str
 
-    def project_motion_vector_to_ground(self, vector, location, camera : CameraModel, projector : GroundProjector) -> np.ndarray:
+    def scale_image(self, image : np.ndarray) -> np.ndarray:
+        scaled_height, scaled_width = (int(self.resize_scale * dim) for dim in image.shape[:2])
+        image_cv = cv2.resize(image, (scaled_width, scaled_height), interpolation=cv2.INTER_NEAREST)
+        return image_cv
+
+
+    def create_debug_visualization(self, image : np.ndarray, locations : List[Pixel], debug_str : Optional[str] = None, motion_vectors : Optional[List[Pixel]] = None) -> np.ndarray:
         """
-        Project the motion vector to the ground plane.
+        Create a debug visualization image.
+
+        Args:
+            image (numpy.ndarray): The original image.
+            locations (list): List of locations (detected_features x 2) they have to match the scale of OpticalFlow.resize_scale.
+            motion_vectors (list): List of motion vectors (detected_features x 2).
+            debug_str (str): The debug string.
+            scale (int): Scale factor for the debug image.
+
+        Returns:
+            vis (numpy.ndarray): The debug visualization image.
+        """
+
+        image_cv = self.scale_image(image)
+        vis = image_cv.copy()
+
+        if motion_vectors is not None:
+            for loc, vector in zip(locations, motion_vectors):
+                x, y = loc.x, loc.y
+                dx, dy = vector.x, vector.y
+                cv2.arrowedLine(vis, (int(x), int(y)), (int(x+dx), int(y+dy)), (0, 255, 0), 2)
+        else:
+            for loc in locations:
+                x, y = loc.x, loc.y
+                cv2.circle(vis, (int(x), int(y)), 2, (0, 255, 0), -1)
+                
+        # Embed debug string in the debug image
+        if debug_str is not None:
+            cv2.putText(vis, debug_str, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # Check that the returned image has the same aspect ratio as the input image
+        assert vis.shape[0] == image.shape[0] * self.resize_scale, "The height of the debug image is not correct."
+        assert vis.shape[1] == image.shape[1] * self.resize_scale, "The width of the debug image is not correct."
+        
+        return vis
+
+    def project_motion_vectors(
+        self,
+        vectors: List[Pixel],
+        locations: List[Pixel],
+        camera: CameraModel,
+        H: Homography,
+        # projector: GroundProjector,
+    ) -> Tuple[List[Pixel], List[Pixel]]:
+        """
+        Project the motion vector using the provided projector.
         
         Args:
-            vector (np.ndarray): The motion vector.
-            location (np.ndarray): The location of the motion vector.
+            vectors (List[Pixel]): The motion vector.
+            locations (List[Pixel]): The location of the motion vector.
             camera (CameraModel): The camera model.
             projector (GroundProjector): The ground projector.
             
         Returns:
-            np.ndarray: The motion vector projected to the ground        
+            List[Pixel]: The projected motion vector        
+            List[Pixel]: The projected locations of the motion vector        
         """
         
         # Since we are processing the image in a scaled form, we need to scale the vector back to the original image size
-        scale = 1/self.resize_scale
-    
-        # Compute the absolute position of the head and tail of the displacement vector
-        head = (location + vector)
-        tail = location
+        projected_motion_vectors = []
+        projected_locations = []
+        for vector, loc in zip(vectors, locations):
+            
+            # Compute the absolute position of the head and tail of the displacement vector
+            head = loc + vector
+            tail = loc
 
-        assert len(head) == len(tail) == 2, f"Head: {head}, Tail: {tail}"
 
-        # Rectify the head and tail of the displacement vector, scaling them to the original image size
-        head_px = Pixel(head[0] * scale, head[1] * scale)
-        tail_px = Pixel(tail[0] * scale, tail[1] * scale)
+            # Rectify the head and tail of the displacement vector, scaling them to the original image size
+            head_px = head / self.resize_scale
+            tail_px = tail / self.resize_scale
 
-        head = camera.rectifier.rectify_pixel(head_px)
-        tail = camera.rectifier.rectify_pixel(tail_px)
+            # head = camera.rectifier.rectify_pixel(head_px)
+            # tail = camera.rectifier.rectify_pixel(tail_px)
 
-        # Project the head and tail of the displacement vector to the ground
-        head_ground = projector.vector2ground(camera.pixel2vector(head))
-        tail_ground = projector.vector2ground(camera.pixel2vector(tail))
+            # Project the head and tail of the displacement vector to the ground
+            
+            # head_ground = projector.vector2ground(camera.pixel2vector(head))
+            # tail_ground = projector.vector2ground(camera.pixel2vector(tail))
 
-        # Compute the resulting displacement vector
-        vector_ground = head_ground - tail_ground
+            head_ground = self._project_pixel(head_px, H)
+            tail_ground = self._project_pixel(tail_px, H)
 
-        return vector_ground.as_array()
+            projected_locations.append(tail_ground)
 
-    def compute_velocity_vector(self, image_motion_vectors: np.ndarray, locations: np.ndarray, projector: GroundProjector, camera: CameraModel) -> np.ndarray:
+            # Compute the resulting displacement vector
+            projected_vector = head_ground - tail_ground
+
+            projected_motion_vectors.append(projected_vector)
+            
+        return projected_motion_vectors, projected_locations
+
+    @staticmethod
+    def _project_pixel(pixel: Pixel, H : Homography) -> Pixel:
+        # project the pixel to the ground plane
+        p = np.array([pixel.x, pixel.y, 1]).reshape(3, 1)
+        p_ground = H @ p
+        p_ground /= p_ground[2]
+        
+        return Pixel(p_ground[0], p_ground[1])
+
+
+    def compute_velocity_vector(self, motion_vectors: List[Pixel]) -> np.ndarray:
         """
         Compute a 2D velocity vector (in [m/s]) from a list of motion vectors (in [px/s]), according to the ground projector and camera models given. 
         """
-        projected_vel_vector_field = []
-
-        # Iterate over each vector in the vector field
-        for vector, loc in zip(image_motion_vectors, locations):
-            vector_ground = self.project_motion_vector_to_ground(vector, loc, camera, projector)
-
-            projected_vel_vector_field.append(vector_ground)
-
-        mean_velocity_vector = np.mean(np.array(projected_vel_vector_field), axis=0)
+        # Convert the motion_vectors to a numpy array
+        motion_vectors_arr = [np.array([v.x, v.y]) for v in motion_vectors]
+        
+        mean_velocity_vector = np.mean(np.array(motion_vectors_arr), axis=0)
         
         return mean_velocity_vector
 

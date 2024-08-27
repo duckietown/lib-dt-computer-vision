@@ -11,8 +11,13 @@ from .boards import CalibrationBoard, ReferenceFrame
 from ... import CameraModel, Pixel
 
 
-def estimate_homography(corners: List[Pixel], board: CalibrationBoard,
-                        camera: CameraModel, ref_frame : ReferenceFrame = ReferenceFrame.BOARD) -> Homography:
+def estimate_homography(
+    corners: List[Pixel],
+    board: CalibrationBoard,
+    camera: CameraModel,
+    ref_frame: ReferenceFrame = ReferenceFrame.BOARD,
+    enforce_orientation: bool = True,
+) -> Homography:
     """
     Estimates the homography matrix from a list of detected corners and a given known board.
 
@@ -51,6 +56,16 @@ def estimate_homography(corners: List[Pixel], board: CalibrationBoard,
 
     # destination corners are on the image, in normalized image coordinates
     image_corners : List [NormalizedImagePoint] = []
+    
+    if enforce_orientation is True:
+        # re-orient corners if necessary
+        p0, p_1 = corners[0], corners[-1]
+        cx, cy = camera.cx, camera.cy
+
+        # we want the first point (red) to be to the left of the principal point
+        if p0.x > cx and p_1.x < cx:
+            corners = corners[::-1]
+
     for corner in corners:
         dst_corner = camera.pixel2vector(corner).as_array()
         image_corners.append(dst_corner)

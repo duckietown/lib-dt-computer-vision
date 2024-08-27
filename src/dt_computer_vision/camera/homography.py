@@ -208,7 +208,7 @@ class HomographyToolkit:
                 f"Invalid homography file '{fpath}'. The root key 'homography' must contain a list of floats."
             )
         # read homography
-        H: Homography = Homography.read(
+        H: Homography = Homography(
             np.array(fcontent["homography"]).reshape((3, 3))
         )
         # load time
