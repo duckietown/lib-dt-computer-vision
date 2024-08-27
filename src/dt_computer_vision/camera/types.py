@@ -94,9 +94,9 @@ class Rectifier:
         mapy = np.ndarray(shape=(H, W, 1), dtype="float32")
         # noinspection PyUnresolvedReferences
         self.mapx, self.mapy = cv2.initUndistortRectifyMap(
-            self.camera.K, self.camera.D, self.camera.R, self.camera.P,
+            self.camera.K, self.camera.D, self.camera.R, self.camera.P, # type: ignore
             (W, H), cv2.CV_32FC1, mapx, mapy
-        )
+        ) # type: ignore
         self._rectify_inited = True
 
     def rectify_pixel(self, point: Pixel) -> Pixel:
@@ -124,7 +124,7 @@ class Rectifier:
         if not self._rectify_inited:
             self._init_rectify_maps()
         # rectify distorted image
-        return cv2.remap(image, self.mapx, self.mapy, interpolation)
+        return cv2.remap(image, self.mapx, self.mapy, interpolation) 
 
     def distort(self, rectified: BGRImage, interpolation=cv2.INTER_NEAREST) -> np.ndarray:
         """
@@ -158,16 +158,16 @@ class CameraModel:
     K: np.ndarray
     D: np.ndarray
     P: np.ndarray
-    R: Optional[np.ndarray] = None
+    R: Optional[np.ndarray] = dataclasses.field(default_factory=lambda: np.eye(3))
     H: Optional[np.ndarray] = None
 
     rectifier: Rectifier = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.K = ensure_ndarray(self.K, shape=(3, 3))
-        self.D = ensure_ndarray(self.D, shape=(5, ))
+        self.D = ensure_ndarray(self.D, shape=(5,))
         self.P = ensure_ndarray(self.P, shape=(3, 4))
-        self.R = np.eye(3) if self.R is None else ensure_ndarray(self.R)
+        self.R = ensure_ndarray(self.R, shape=(3, 3)) if self.R is not None else np.eye(3)
         self.H = None if self.H is None else ensure_ndarray(self.H)
         self.rectifier = Rectifier(self)
 
