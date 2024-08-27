@@ -12,7 +12,7 @@ Segment = Tuple[GroundPoint, GroundPoint]
 
 GRID_SIZE: int = 4
 # resolution of each cell in meters
-RESOLUTION: float = 0.1
+RESOLUTION: float = 0.3
 # how often (number of cells) do we draw a tick with the value
 TICKS_EVERY: int = 2
 # everything here is calibrated for a 1000x1000 image
@@ -183,11 +183,12 @@ def debug_image(
         segments (:obj:`dict`): Line segments in the ground plane relative to robot's origin
         size (:obj:`tuple`): Size of the image to draw
         background_image (:obj:`np.ndarray`): Optional background image
-
         grid_size (:obj:`int`): Number of cells to draw
         scale (:obj:`int`): Scale of the image
         s_segment_thickness (:obj:`int`): Thickness of the segments drawn
         s_padding (:obj:`int`): Padding of the grid
+        resolution (:obj:`float`): resolution of each cell in meters
+        start_y (:obj:`float`): starting y coordinate
 
     Returns:
         :obj:`numpy array`: an OpenCV image
@@ -228,20 +229,20 @@ def debug_image(
     for color, lines in segments.items():
         for start, end in lines:
             # only draw segments that are within the grid
-            if np.any(np.abs([start.y, end.y]) > (half_grid_size_horizontal * resolution_x)):
+            if np.any(np.abs([start.y, end.y]) > (grid_size_y * resolution_y)):
                 continue
-            if np.any(np.abs([start.x, end.x]) > (grid_size_y * resolution_y)):
+            if np.any(np.abs([start.x, end.x]) > (half_grid_size_horizontal * resolution_x)):
                 continue
             # draw segment
             cv2.line(
                 image,
                 pt1=(
-                    origin_x + int((-start.y / resolution_x) * cell_size_x),
-                    origin_y - int(((start.x - start_y) / resolution_y) * cell_size_y)
+                    origin_x + int((start.x / resolution_x) * cell_size_x),
+                    origin_y + int(((start.y - start_y) / resolution_y) * cell_size_y)
                 ),
                 pt2=(
-                    origin_x + int((-end.y / resolution_x) * cell_size_x),
-                    origin_y - int(((end.x - start_y) / resolution_y) * cell_size_y)
+                    origin_x + int((end.x / resolution_x) * cell_size_x),
+                    origin_y + int(((end.y - start_y) / resolution_y) * cell_size_y)
                 ),
                 color=color,
                 thickness=segment_thickness,

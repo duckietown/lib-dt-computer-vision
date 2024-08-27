@@ -7,7 +7,11 @@ import numpy as np
 import requests
 import yaml
 
+import dt_computer_vision.camera
+
+
 if typing.TYPE_CHECKING:
+    from dt_computer_vision.camera.types import CameraModel
     import dt_computer_vision
 
 
@@ -30,6 +34,88 @@ class Homography(np.ndarray):
         # Use __new__ to create an instance of Homography
         return Homography(H_inv)
 
+def pose_from_homography(H: Homography ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the pose (translation and rotation) from a homography matrix.
+
+    Parameters:
+        H (Homography): The homography matrix (as returned by 
+        `dt_computer_vision.camera.calibration.extrinsics.ransac.estimate_homography`).
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A tuple containing the translation vector and rotation matrix.
+
+    """
+
+    H = H.inverse
+
+    norm = np.linalg.norm(H[:, 0])
+    H /= norm
+
+    c1 = H[:, 0]
+    c2 = H[:, 1]
+    c3 = np.cross(c1, c2)
+
+    tvec = H[:, 2]
+    R = np.zeros((3, 3))
+    R[:, 0] = c1
+    R[:, 1] = c2
+    R[:, 2] = c3
+
+    # Orthogonalize rotation matrix using SVD
+    U, _, Vt = np.linalg.svd(R)
+    R = np.dot(U, Vt)
+    if np.linalg.det(R) < 0:
+        Vt[2, 0] *= -1
+        Vt[2, 1] *= -1
+        Vt[2, 2] *= -1
+        R = np.dot(U, Vt)
+    return tvec, R
+
+
+def __compute_homography_from_poses(R1, tvec1, R2, tvec2, d_inv, normal):
+    homography = np.dot(R2, R1.T) + d_inv * (np.dot(-R2, np.dot(R1.T, tvec1)) + tvec2) * normal.T
+    return homography
+
+
+def interpolate_homography(H : Homography, tvec : np.ndarray, R : np.ndarray, camera : 'dt_computer_vision.camera.CameraModel') -> Homography:
+    """Compute a new homography from a given homography and a goal pose for the camera, expressed in the board reference frame.
+    
+    Args:
+        H (Homography): The given homography.
+        tvec (np.ndarray): The goal pose for the camera, expressed in the board reference frame.
+        R (np.ndarray): The rotation matrix of the goal pose.
+        camera ('dt_computer_vision.camera.CameraModel'): The camera model.
+    Returns:
+        Homography: The computed new homography.
+    """
+    
+    tvec1, R1 = pose_from_homography(H)
+    tvec1 = tvec1.reshape(3, 1)
+    
+    assert tvec.shape == (3, 1)
+    assert R.shape == (3, 3)
+    assert R1.shape == (3, 3)
+
+    # Compute plane normal at camera pose 1
+    normal = np.array([[0], [0], [1]])
+    normal1 : np.ndarray = np.dot(R1, normal)
+
+    # Compute plane distance to the camera frame 1
+    origin = np.zeros((3, 1))
+    origin1 = np.dot(R1, origin) + tvec1
+    d_inv1 = 1.0 / np.dot(normal1.T, origin1)
+    
+    homography_euclidean = __compute_homography_from_poses(R1, tvec1, R, tvec, d_inv1, normal1)
+
+    # Compute the full homography using the camera matrix
+    homography = np.dot(np.dot(camera.K, homography_euclidean), np.linalg.inv(camera.K))
+
+    # Normalize the homography matrices
+    homography /= homography[2, 2]
+    
+    return Homography(homography)
+
 
 class ResolutionDependentHomography(Homography):
 
@@ -43,7 +129,7 @@ class ResolutionDependentHomography(Homography):
         return value.view(ResolutionDependentHomography)
 
     def camera_independent(
-            self, camera: "dt_computer_vision.camera.CameraModel"
+            self, camera: 'CameraModel'
     ) -> "ResolutionIndependentHomography":
         Hi2v: Homography = camera.homography_independent2vector()
         Hv2x: Homography = self
@@ -51,7 +137,6 @@ class ResolutionDependentHomography(Homography):
             np.dot(Hi2v, Hv2x)
         )
         return Hi2x
-
 
 class ResolutionIndependentHomography(Homography):
 
@@ -65,7 +150,7 @@ class ResolutionIndependentHomography(Homography):
         return value.view(ResolutionIndependentHomography)
 
     def camera_specific(
-            self, camera: "dt_computer_vision.camera.CameraModel"
+            self, camera: 'CameraModel'
     ) -> ResolutionDependentHomography:
         Hv2i: Homography = camera.homography_vector2independent()
         Hi2x: Homography = self
@@ -86,15 +171,13 @@ class HomographyToolkit:
 """
 
     DEFAULT_VERSION: str = "2"
-    DEFAULT_FORMAT: str = "resolution-independent"
     SUPPORTED_VERSIONS: List[str] = [DEFAULT_VERSION]
-    SUPPORTED_FORMATS: List[str] = [DEFAULT_FORMAT]
 
     @staticmethod
     def load_from_disk(
             fpath: str,
             return_date: bool = False
-    ) -> Union[ResolutionIndependentHomography, Tuple[ResolutionIndependentHomography, Optional[datetime]]]:
+    ) -> Union[Homography, Tuple[Homography, Optional[datetime]]]:
         fpath = os.path.abspath(fpath)
         # make sure the file exists
         if not os.path.exists(fpath) or not os.path.isfile(fpath):
@@ -114,17 +197,6 @@ class HomographyToolkit:
                 f"The homography file '{fpath}' uses the version '{version}' which is not supported. "
                 f"Supported versions are: {HomographyToolkit.SUPPORTED_VERSIONS}"
             )
-        # - check format
-        if "format" not in fcontent:
-            raise ValueError(
-                f"Invalid homography file '{fpath}'. The required root key 'format' was not found."
-            )
-        format: str = fcontent["format"].lower().strip()
-        if format not in HomographyToolkit.SUPPORTED_FORMATS:
-            raise ValueError(
-                f"The homography file '{fpath}' uses the format '{format}' which is not supported. "
-                f"Supported formats are: {HomographyToolkit.SUPPORTED_FORMATS}"
-            )
         # - check homography
         if "homography" not in fcontent:
             raise ValueError(
@@ -136,7 +208,7 @@ class HomographyToolkit:
                 f"Invalid homography file '{fpath}'. The root key 'homography' must contain a list of floats."
             )
         # read homography
-        H: ResolutionIndependentHomography = ResolutionIndependentHomography.read(
+        H: Homography = Homography(
             np.array(fcontent["homography"]).reshape((3, 3))
         )
         # load time
@@ -149,16 +221,14 @@ class HomographyToolkit:
 
     @staticmethod
     def save_to_disk(
-            H: ResolutionIndependentHomography,
+            H: Homography,
             fpath: str,
             exist_ok: bool = False,
             date: datetime = None,
     ):
-        if not isinstance(H, ResolutionIndependentHomography):
-            raise ValueError(
-                "Only resolution-independent homographies can be stored to disk. Please, "
-                "convert your homography to a ResolutionIndependentHomography first."
-            )
+        if not isinstance(H, Homography):
+            raise ValueError()
+
         fpath = os.path.abspath(fpath)
         # make sure the file does not exists
         if os.path.exists(fpath):
@@ -173,7 +243,6 @@ class HomographyToolkit:
             yaml=yaml.safe_dump(
                 {
                     "version": HomographyToolkit.DEFAULT_VERSION,
-                    "format": HomographyToolkit.DEFAULT_FORMAT,
                     "date": (date or datetime.today()).isoformat(),
                     "homography": H.tolist(),
                 },
@@ -200,7 +269,6 @@ class HomographyToolkit:
         
         ```
         version: "2"
-        format: "resolution-independent"
         date: "2021-01-01T12:00:00"
         homography: [1, 0, 0, 0, 1, 0, 0, 0, 1]
         ```
@@ -215,7 +283,6 @@ class HomographyToolkit:
             yaml=yaml.safe_dump(
                 {
                     "version": HomographyToolkit.DEFAULT_VERSION,
-                    "format": HomographyToolkit.DEFAULT_FORMAT,
                     "date": (date or datetime.today()).isoformat(),
                     "homography": H.tolist(),
                 },

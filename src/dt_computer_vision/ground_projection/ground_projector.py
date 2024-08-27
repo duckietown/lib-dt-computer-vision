@@ -89,9 +89,9 @@ class GroundProjector:
 
         """
         # rectify point [distorted point -> rectified point]
-        point_rect = self.camera.rectifier.rectify_point(point)
+        point_rect = self.camera.rectifier.rectify_pixel(self.camera.vector2pixel(point))
         # project on ground [rectified point -> ground point]
-        ground_pt = self.vector2ground(point_rect)
+        ground_pt = self.vector2ground(self.camera.pixel2vector(point_rect))
         # ---
         return ground_pt
 
