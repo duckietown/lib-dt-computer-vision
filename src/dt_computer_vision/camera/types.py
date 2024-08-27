@@ -353,7 +353,7 @@ class CameraModel:
         )
         
     @classmethod
-    def from_ros_calibration(self, filestream, alpha = 0.0):
+    def from_ros_calibration(cls, filestream, alpha = 0.0):
         """
         Import the camera calibration parameters from a ROS calibration file.
         """
