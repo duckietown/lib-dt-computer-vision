@@ -24,4 +24,6 @@ prune out
 
 include src/dt_computer_vision/camera/calibration/extrinsics/assets/*.png
 
+recursive-include assets *
+
 prune src/dt_computer_vision_tests
