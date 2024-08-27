@@ -10,7 +10,25 @@ import yaml
 if typing.TYPE_CHECKING:
     import dt_computer_vision
 
-Homography = np.ndarray
+
+class Homography(np.ndarray):
+
+    def __new__(cls, input_array):
+        obj = np.asarray(input_array).view(cls)
+        return obj
+
+    @property
+    def inverse(self) -> 'Homography':
+        """
+        Inverse matrix, normalized to have the [2,2] element equal to 1.
+        
+        H_inv = inv(H)/inv(H)[2,2]
+        """
+        H_inv = np.linalg.inv(self)
+        H_inv /= H_inv[2, 2]
+        
+        # Use __new__ to create an instance of Homography
+        return Homography(H_inv)
 
 
 class ResolutionDependentHomography(Homography):
