@@ -77,10 +77,6 @@ setup(
     package_dir={"": "src"},
     packages=packages,
     include_package_data=True,
-    package_data={
-        # If you need to include specific types of files from the assets directory
-        '': ['assets/*.*'],
-    },
     long_description=description,
     version=version,
     test_suite='dt_computer_vision_tests',  # Ensure this points to your test package
