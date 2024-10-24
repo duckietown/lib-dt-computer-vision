@@ -62,11 +62,16 @@ class Pixel(Point):
         return Pixel(self.x * scalar, self.y * scalar)
 
 class NormalizedImagePoint(Point):
+    """
+    Image point normalized using the camera intrinsics.
+    The normalized coordinates are defined as follows:
+        u=(x-cx)/fx, v=(y-cy)/fy
+    """
     pass
 
 
 @dataclasses.dataclass
-class ResolutionIndependentImagePoint(NormalizedImagePoint):
+class ResolutionIndependentImagePoint(Point):
 
     def __post_init__(self):
         if self.x < 0 or self.x > 1 or self.y < 0 or self.y > 1:
@@ -215,10 +220,6 @@ class CameraModel:
         """returns (height, width) of image"""
         return self.height, self.width
 
-######################################
-# TODO: #5 [-1, 1] X [-1, 1] are not coordinates defined in the coordinate convention.
-#     We should deprecate this method and release a new version freezing the API. 
-
     def vector2pixel(self, vec: NormalizedImagePoint) -> Pixel:
         """
         Converts a ``[-inf,+inf] X [-inf,+inf]`` representation to ``[0, W] X [0, H]``
@@ -250,8 +251,6 @@ class CameraModel:
         x = (pixel.x - self.cx) / self.fx
         y = (pixel.y - self.cy) / self.fy
         return NormalizedImagePoint(x, y)
-
-########################################
 
     def cropped(self, top: int = 0, right: int = 0, bottom: int = 0, left: int = 0) -> 'CameraModel':
         K1: np.ndarray = np.array([
