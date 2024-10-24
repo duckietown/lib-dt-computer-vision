@@ -250,6 +250,7 @@ class CameraModel:
         """
         x = (pixel.x - self.cx) / self.fx
         y = (pixel.y - self.cy) / self.fy
+
         return NormalizedImagePoint(x, y)
 
     def cropped(self, top: int = 0, right: int = 0, bottom: int = 0, left: int = 0) -> 'CameraModel':
@@ -312,6 +313,11 @@ class CameraModel:
         x = pixel.x / (self.width - 1)
         y = pixel.y / (self.height - 1)
         return ResolutionIndependentImagePoint(x, y)
+
+    def independent2pixel(self, riip: ResolutionIndependentImagePoint) -> Pixel:
+        x = riip.x * (self.width - 1)
+        y = riip.y * (self.height - 1)
+        return Pixel(x,y)
 
     def homography_vector2independent(self) -> np.ndarray:
         """
