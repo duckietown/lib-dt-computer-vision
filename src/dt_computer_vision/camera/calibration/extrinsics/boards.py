@@ -34,7 +34,7 @@ class CalibrationBoard:
         if reference_frame == ReferenceFrame.BOARD:
             board_offset = np.array([0, 0])
         elif reference_frame == ReferenceFrame.ROBOT:
-            board_offset = np.array([self.x_offset, self.y_offset])
+            board_offset = np.array([-self.square_size * (self.columns - 1) / 2, 0])
 
         square_size = self.square_size
         
