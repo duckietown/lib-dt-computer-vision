@@ -13,7 +13,7 @@ from ... import BGRImage, Pixel, CameraModel
 from ... import NormalizedImagePoint
 
 
-def find_corners(image: BGRImage, camera: CameraModel, board: CalibrationBoard, win_size: int = 3) -> List[Pixel]:
+def find_corners(image: BGRImage, board: CalibrationBoard, camera: CameraModel = None, win_size: int = 3) -> List[Pixel]:
     """
     Finds the corners of the given board in the given image.
 
@@ -24,6 +24,7 @@ def find_corners(image: BGRImage, camera: CameraModel, board: CalibrationBoard, 
         image (:obj:``numpy array``): A color (3-channel) OpenCV image
         board (:obj:``dt_computer_vision.camera.calibration.extrinsics.boards.CalibrationBoard``):
             The calibration board to look for
+        camera (:obj:``dt_computer_vision.camera.types.CameraModel``): Camera
         win_size (:obj:``int``):    Window size for the corner detection
 
     Returns:
@@ -52,9 +53,10 @@ def find_corners(image: BGRImage, camera: CameraModel, board: CalibrationBoard, 
 
     # findChessboardCorners gives us the corners in row-major order (N x 1 x 2), return a list of Pixel objects
     corners = [Pixel(c[0][0], c[0][1]) for c in corners]
-    # we want the first point (red) to be to the left of the principal point
-    if corners[-1].x < camera.cx < corners[0].x:
-        corners = corners[::-1]
+    if camera:
+        # we want the first point (red) to be to the left of the principal point
+        if corners[-1].x < camera.cx < corners[0].x:
+            corners = corners[::-1]
     # ---
     return corners
 
