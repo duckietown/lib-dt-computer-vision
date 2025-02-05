@@ -15,7 +15,7 @@ def estimate_homography(
     corners: List[Pixel],
     board: CalibrationBoard,
     camera: CameraModel,
-    ref_frame: ReferenceFrame = ReferenceFrame.BOARD,
+    ref_frame: ReferenceFrame,
     enforce_orientation: bool = True,
 ) -> Homography:
     """
@@ -34,6 +34,7 @@ def estimate_homography(
             The calibration board to use
         camera (:obj:``dt_computer_vision.camera.CameraModel``): Camera model of the camera used
         ref_frame (:obj:``ReferenceFrame``): The reference frame of the calibration board
+        enforce_orientation (:obj:``bool``, optional): Enforces the first point to be to the left of the principal point of the camera. Defaults to True.
 
     Returns:
         :obj:``Homography``: The estimated homography, mapping normalized coordinates in the image
