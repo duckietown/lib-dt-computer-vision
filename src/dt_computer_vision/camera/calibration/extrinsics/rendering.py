@@ -8,7 +8,7 @@ from dt_computer_vision.ground_projection.types import GroundPoint
 from .boards import CalibrationBoard
 from ... import BGRImage, Pixel
 
-from dt_computer_vision.ground_projection.rendering import draw_grid_image
+from dt_computer_vision.ground_projection.rendering import draw_grid_image, robot_to_image_frame
 
 assets_dir: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "assets"))
 gui_active_background_image_fpath: str = os.path.join(assets_dir, "gui_active.png")
@@ -136,23 +136,23 @@ def top_view_projected_corners(
         scale: int = SCALE,
         s_padding: int = S_PADDING,
         resolution: Union[float, Tuple[float, float]] = RESOLUTION,
-        start_y: float = 0.0
+        start_x: float = 0.0
 ):
     """
     Generates a debug image with all the detected corners projected onto the gound plane and
     plotted with respect to the robot's origin.
 
     Args:
-        corners (List[GroundPoint]):    True corners computed from knowledge of the board and robot location
+        corners (List[GroundPoint]):    True corners computed from knowledge of the board and robot location (in the robot reference frame)
         errors (List[float]):           Error in meters for each reprojected ground point
-        size (Tuple[int, int]):         Size of the image to draw (width, height)
+        size (Tuple[int, int]):         Size in pixels of the image to draw (width, height)
         background_image (np.ndarray):  Optional background image to draw on
         grid_size (Union[int, Tuple[int, int]]):    Number of rows and columns to show in the grid
         scale (int):                    Scale of the image
         s_padding (int):                Amount of padding (scaled) to leave around the grid plot
         resolution (Union[float, Tuple[float, float]]):
                                         Resolution of the grid (size of each row/column in meters)
-        start_y (float):                Offset of the y-axis (the smallest value along the y-axis to show)
+        start_x (float):                Offset of the y-axis (the smallest value along the y-axis to show)
 
     Returns:
         np.ndarray:                    OpenCV image drawn
@@ -164,7 +164,7 @@ def top_view_projected_corners(
         scale=scale,
         s_padding=s_padding,
         resolution=resolution,
-        start_y=start_y,
+        start_x=start_x,
         s_grid_thickness=S_GRID_THICKNESS,
         s_font_size=S_FONT_SIZE,
         s_font_thickness=S_FONT_THICKNESS,
@@ -188,21 +188,26 @@ def top_view_projected_corners(
     grid_size_x, grid_size_y = grid_size
 
     half_grid_size_horizontal = int(grid_size_x / 2)
-    cell_size_x = int((size_x - 3 * padding) / grid_size_x)
-    cell_size_y = int((size_y - 3 * padding) / grid_size_y)
-    origin_x, origin_y = 2 * padding + half_grid_size_horizontal * cell_size_x, size_y - 2 * padding
+    cell_size_u = int((size_x - 3 * padding) / grid_size_x)
+    cell_size_v = int((size_y - 3 * padding) / grid_size_y)
+    origin_u, origin_v = 2 * padding + half_grid_size_horizontal * cell_size_u, size_y - 2 * padding
 
     image = background_image.copy()
 
     # plot known corners
     for i, corner in enumerate(corners):
         # draw point
+        u, v = robot_to_image_frame(
+            corner,
+            resolution,
+            (origin_u, origin_v),
+            (cell_size_u, cell_size_v),
+            start_x,
+        )
+
         cv2.circle(
             image,
-            center=(
-                origin_x + int((corner.x / resolution_x) * cell_size_x),
-                origin_y + int(((corner.y - start_y) / resolution_y) * cell_size_y)
-            ),
+            center=(u,v),
             radius=2,
             color=(30, 30, 30),
             thickness=-1
@@ -211,11 +216,8 @@ def top_view_projected_corners(
         # draw error as a circle
         cv2.circle(
             image,
-            center=(
-                origin_x + int((corner.x / resolution_x) * cell_size_x),
-                origin_y + int(((corner.y - start_y) / resolution_y) * cell_size_y)
-            ),
-            radius=int((error / resolution_x) * cell_size_x),
+            center=(u,v),
+            radius=int((error / resolution_x) * cell_size_u),
             color=(0, 0, 255),
             thickness=1
         )
