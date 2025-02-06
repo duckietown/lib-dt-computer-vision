@@ -29,7 +29,6 @@ test_camera = {
 }
 # principal point projected onto the ground plane (manually measured when image1 was taken)
 expected_pp = [0.4, 0]
-board = CalibrationBoard8by6
 camera = CameraModel(**test_camera)
 
 def test_calibration_board_corners():
@@ -56,6 +55,7 @@ def test_calibration_board_corners():
     assert bottom_right.y == board.y_offset - board.square_size * board.columns, f"Expected y == {board.y_offset - board.square_size * (board.columns)}, got {bottom_right.y}."
     
 def test_extrinsics_calibration_image1():
+    board = CalibrationBoard8by6
     image1_fpath: str = os.path.join(assets_dir, "image1.jpg")
     image1 = cv2.imread(image1_fpath)
     # rectify image
@@ -74,6 +74,3 @@ def test_extrinsics_calibration_image1():
     print(f"Error is ~{error * 100:.2f}cm.")
     # make sure the error is within 3cm
     assert error <= 0.03, f"Error is {error * 100:.2f}cm, expected less than 3cm."
-
-if __name__ == "__main__":
-    test_extrinsics_calibration_image1()
