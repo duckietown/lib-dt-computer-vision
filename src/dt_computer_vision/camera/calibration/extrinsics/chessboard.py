@@ -13,7 +13,7 @@ from ... import BGRImage, Pixel, CameraModel
 from ... import NormalizedImagePoint
 
 
-def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) -> List[Pixel]:
+def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3, enforce_orientation: bool = True) -> List[Pixel]:
     """
     Finds the corners of the given board in the given image.
 
@@ -58,16 +58,17 @@ def find_corners(image: BGRImage, board: CalibrationBoard, win_size: int = 3) ->
     first_corner = corners[0]
     last_corner = corners[-1]
 
-    if first_corner.x > last_corner.x and first_corner.y > last_corner.y:
-        # Corners are in the incorrect order, we need to reverse them
-        corners = corners[::-1]
-    elif first_corner.x < last_corner.x and first_corner.y < last_corner.y:
-        # Corners are in the correct order
-        pass
-    else:
-        raise NoCornersFoundException(
-            "The corners couldn't be rearranged. Make sure the camera is positioned correctly."
-        )
+    if enforce_orientation:
+        if first_corner.x > last_corner.x and first_corner.y > last_corner.y:
+            # Corners are in the incorrect order, we need to reverse them
+            corners = corners[::-1]
+        elif first_corner.x < last_corner.x and first_corner.y < last_corner.y:
+            # Corners are in the correct order
+            pass
+        else:
+            raise NoCornersFoundException(
+                "The corners couldn't be rearranged. Make sure the camera is positioned correctly."
+            )
     # ---
     return corners
 
