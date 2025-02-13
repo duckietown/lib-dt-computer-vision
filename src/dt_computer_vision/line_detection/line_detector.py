@@ -25,8 +25,7 @@ class LineDetector(LineDetectorInterface):
     Duckiebot's camera stream as part of the lane localization pipeline. It is setup in a way
     that allows efficient detection of line segments in different color ranges.
 
-    In order to process an image, first the :py:meth:`setImage` method must be called.
-    In makes an internal copy of the image, converts it to `HSV color space
+    The detect function is called with an image color ranges. It converts it to `HSV color space
     <https://en.wikipedia.org/wiki/HSL_and_HSV>`_, which is much better for color segmentation,
     and applies `Canny edge detection <https://en.wikipedia.org/wiki/Canny_edge_detector>`_.
 
