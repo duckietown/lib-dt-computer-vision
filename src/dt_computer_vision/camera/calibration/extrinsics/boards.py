@@ -28,23 +28,39 @@ class CalibrationBoard:
         return Point(self.x_offset, self.y_offset)
 
     def corners(self, reference_frame : ReferenceFrame = ReferenceFrame.ROBOT) -> List[GroundPoint]:
+        """Obtain a list of ground points of the interior corners of the calibration board.
+
+        Args:
+            reference_frame (ReferenceFrame, optional): Reference frame in which to express the board points. Defaults to ReferenceFrame.ROBOT.
+
+        Returns:
+            List[GroundPoint]: _description_
+        """
         # ground points, easily reconstructable given a known board
         ground_corners: List[GroundPoint] = []
-        
-        if reference_frame == ReferenceFrame.BOARD:
-            board_offset = np.array([0, 0])
-        elif reference_frame == ReferenceFrame.ROBOT:
-            board_offset = np.array([-self.square_size * (self.columns - 1) / 2, 0])
-
         square_size = self.square_size
         
-        # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
-        for i in range(self.rows):
-            for j in range(self.columns):
-                object_point = np.array([j * square_size, i * square_size]) + board_offset
-                ground_corners.append(GroundPoint(*object_point))
-        # ---
-        return ground_corners
+        if reference_frame == ReferenceFrame.BOARD:
+            # In this case we express the board coordinates in the board's frame
+            # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
+            for i in range(self.rows):
+                for j in range(self.columns):
+                    object_point = np.array([j * square_size, i * square_size])
+                    ground_corners.append(GroundPoint(*object_point))
+            # ---
+            return ground_corners
+
+        elif reference_frame == ReferenceFrame.ROBOT:
+            # In this case we express the board coordinates in the robot's frame
+            board_offset = np.array([self.x_offset, self.y_offset])
+
+            # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
+            for i in range(self.rows):
+                for j in range(self.columns):
+                    object_point = np.array([(self.rows-i) * square_size, - (j+1) * square_size]) + board_offset
+                    ground_corners.append(GroundPoint(*object_point))
+            # ---
+            return ground_corners
 
 
 CalibrationBoard8by6 = CalibrationBoard(
@@ -52,7 +68,7 @@ CalibrationBoard8by6 = CalibrationBoard(
     columns=7,
     square_size=0.031,
     x_offset=0.16,
-    y_offset=-0.124,
+    y_offset=0.124,
 )
 
 CalibrationBoardDD24 = CalibrationBoard(

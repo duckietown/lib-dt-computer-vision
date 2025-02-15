@@ -35,7 +35,7 @@ def draw_grid_image(
         s_font_thickness: int = S_FONT_THICKNESS,
         ticks_every: Union[int, Tuple[int, int]] = TICKS_EVERY,
         resolution: Union[float, Tuple[float, float]] = RESOLUTION,
-        start_y: float = 0.0
+        start_x: float = 0.0
 ):
     """
     Generates a grid image with distances from the robot's origin.
@@ -132,7 +132,7 @@ def draw_grid_image(
     for i in range(0, grid_size_y + 1, ticks_every_y):
         cv2.putText(
             grid_image,
-            f"{int(start_y * 100) + i * int(resolution_y * 100)}cm",
+            f"{int(start_x * 100) + i * int(resolution_y * 100)}cm",
             (10, origin_y - i * cell_size_y + v_text_centering_offset),
             cv2.FONT_HERSHEY_PLAIN,
             font_size,
@@ -151,7 +151,7 @@ def draw_grid_image(
     )
 
     # draw wheel's axis
-    if start_y == 0.0:
+    if start_x == 0.0:
         cv2.line(
             grid_image,
             pt1=(2 * padding, origin_y),
@@ -173,7 +173,7 @@ def debug_image(
         s_segment_thickness: int = S_SEGMENT_THICKNESS,
         s_padding: int = S_PADDING,
         resolution: Union[float, Tuple[float, float]] = RESOLUTION,
-        start_y: float = 0.0
+        start_x: float = 0.0
 ):
     """
     Generates a debug image with all the projected segments plotted with respect to the
@@ -181,14 +181,14 @@ def debug_image(
 
     Args:
         segments (:obj:`dict`): Line segments in the ground plane relative to robot's origin
-        size (:obj:`tuple`): Size of the image to draw
+        size (:obj:`tuple`): Size in pixels of the image to draw
         background_image (:obj:`np.ndarray`): Optional background image
         grid_size (:obj:`int`): Number of cells to draw
         scale (:obj:`int`): Scale of the image
         s_segment_thickness (:obj:`int`): Thickness of the segments drawn
         s_padding (:obj:`int`): Padding of the grid
         resolution (:obj:`float`): resolution of each cell in meters
-        start_y (:obj:`float`): starting y coordinate
+        start_x (:obj:`float`): starting x coordinate of the view in the robot reference frame
 
     Returns:
         :obj:`numpy array`: an OpenCV image
@@ -200,7 +200,7 @@ def debug_image(
         scale=scale,
         s_padding=s_padding,
         resolution=resolution,
-        start_y=start_y,
+        start_x=start_x,
     )
 
     # if grid_size is an integer, it means that the grid is square
@@ -212,40 +212,74 @@ def debug_image(
     # unpack
     resolution_x, resolution_y = resolution
 
-    grid_size_x, grid_size_y = grid_size
-    size_x, size_y = size
+    grid_size_x, grid_size_v = grid_size
+    size_u, size_v = size
 
-    s = max(size_x, size_y) / scale
+    s = max(size_u, size_v) / scale
     segment_thickness = max(1, int(s_segment_thickness * s))
     padding = int(s_padding * s)
 
     half_grid_size_horizontal = int(grid_size_x / 2)
-    cell_size_x = int((size_x - 3 * padding) / grid_size_x)
-    cell_size_y = int((size_y - 3 * padding) / grid_size_y)
-    origin_x, origin_y = 2 * padding + half_grid_size_horizontal * cell_size_x, size_y - 2 * padding
+    cell_size_x = int((size_u - 3 * padding) / grid_size_x)
+    cell_size_y = int((size_v - 3 * padding) / grid_size_v)
+    origin_u, origin_v = 2 * padding + half_grid_size_horizontal * cell_size_x, size_v - 2 * padding
 
     image = background_image.copy()
     # plot every segment if both ends are in the scope of the image (within 50cm from the origin)
     for color, lines in segments.items():
         for start, end in lines:
             # only draw segments that are within the grid
-            if np.any(np.abs([start.y, end.y]) > (grid_size_y * resolution_y)):
+            if np.any(np.array([start.x, end.x]) > (start_x + grid_size_v * resolution_x)) or \
+                np.any(np.array([start.x, end.x]) < start_x ):
                 continue
-            if np.any(np.abs([start.x, end.x]) > (half_grid_size_horizontal * resolution_x)):
+            if np.any(np.abs([start.y, end.y]) > (half_grid_size_horizontal * resolution_y)):
                 continue
             # draw segment
             cv2.line(
                 image,
-                pt1=(
-                    origin_x + int((start.x / resolution_x) * cell_size_x),
-                    origin_y + int(((start.y - start_y) / resolution_y) * cell_size_y)
+                pt1=robot_to_image_frame(
+                    p=start,
+                    resolution=resolution,
+                    origin_uv=(origin_u, origin_v),
+                    cell_size_uv=(cell_size_x, cell_size_y),
+                    start_x=start_x
                 ),
-                pt2=(
-                    origin_x + int((end.x / resolution_x) * cell_size_x),
-                    origin_y + int(((end.y - start_y) / resolution_y) * cell_size_y)
-                ),
+                pt2=robot_to_image_frame(
+                    p=end,
+                    resolution=resolution,
+                    origin_uv=(origin_u, origin_v),
+                    cell_size_uv=(cell_size_x, cell_size_y),
+                    start_x=start_x),
                 color=color,
                 thickness=segment_thickness,
             )
     # ---
     return image
+
+def robot_to_image_frame(
+    p: GroundPoint,
+    resolution: Tuple[float, float],
+    origin_uv: Tuple[int, int],
+    cell_size_uv: Tuple[int, int],
+    start_x: float = 0,
+    # padding
+) -> Tuple[int, int]:
+    """
+    Converts a point in the robot frame to pixel coordinates in the image frame.
+
+    Args:
+        p (:obj:`GroundPoint`): Point in the robot frame
+        resolution (:obj:`float`): resolution of each cell in meters
+        origin_uv (:obj:`tuple`): Origin of the grid in pixel coordinates
+        cell_size_uv (:obj:`tuple`): Cell size in pixels
+        start_x (:obj:`float`): starting x coordinate of the view in the robot reference frame
+
+    Returns:
+        :obj:`tuple`: Pixel coordinates in the image frame
+
+    """
+
+    return (
+        origin_uv[0] - int((p.y / resolution[0]) * cell_size_uv[0]),
+        origin_uv[1] - int(((p.x - start_x)/ resolution[1]) * cell_size_uv[1]) 
+    )

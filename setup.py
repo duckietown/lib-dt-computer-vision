@@ -41,6 +41,7 @@ install_requires = [
 ]
 tests_require = [
     "pytest",
+    "matplotlib",
     "pytest-cov",
 ]
 
