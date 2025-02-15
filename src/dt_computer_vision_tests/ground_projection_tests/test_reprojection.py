@@ -4,7 +4,7 @@ from typing import List
 import cv2
 import numpy as np
 
-from dt_computer_vision.camera import NormalizedImagePoint
+from dt_computer_vision.camera.calibration.extrinsics.chessboard import get_ground_corners_and_error, compute_placement_error
 from dt_computer_vision.camera.calibration.extrinsics.boards import CalibrationBoard8by6, \
     CalibrationBoard
 from dt_computer_vision.camera.calibration.extrinsics.chessboard import find_corners
@@ -12,6 +12,8 @@ from dt_computer_vision.camera.types import CameraModel
 from dt_computer_vision.ground_projection.ground_projector import GroundProjector
 from dt_computer_vision.ground_projection.types import GroundPoint
 from dt_computer_vision_tests.line_detection_tests.test_detection import assets_dir
+from dt_computer_vision.camera.calibration.extrinsics.boards import ReferenceFrame
+from dt_computer_vision.camera.calibration.extrinsics.ransac import estimate_homography
 
 
 # NOTE: this is from the real `myrobot` duckiebot at TTIC, March 2022
@@ -30,13 +32,12 @@ test_camera = {
           [0.0, 239.74398803710938, 237.60151004037834, 0.0],
           [0.0, 0.0, 1.0, 0.0]],
     # NOTE: this homography is computed in the 20-entrinsics-calibration jupyter notebook
-    "H": [[-2.42749970e-02, 9.46389079e-02, 3.81909422e-01],
-          [-4.55028567e-01, -1.17673909e-03, -1.87813039e-02],
-          [-1.46006785e-01, 3.29784838e+00, 1]]
+    "H": [[-3.25205447e-02,  1.19331664e-01, 3.93352735e-01],
+          [-4.72717010e-01, -9.44920613e-05, -1.91892118e-02],
+          [-1.92169544e-01,  3.63163818e+00,  1.00000000e+00]]
 }
 
 camera = CameraModel(**test_camera)
-projector = GroundProjector(camera)
 board: CalibrationBoard = CalibrationBoard8by6
 
 
@@ -49,24 +50,16 @@ def test_reprojection_error():
     image_rect = camera.rectifier.rectify(image)
 
     # find corners
-    corners = find_corners(image_rect, board, win_size=11)
+    corners = find_corners(image_rect, board)
     print(f"Found {len(corners)} corners.")
-    assert len(corners) == (board.columns - 1) * (board.rows - 1)
+    assert len(corners) == (board.columns) * (board.rows)
+    camera.H = estimate_homography(corners, board, camera, ref_frame=ReferenceFrame.ROBOT)
+    projector = GroundProjector(camera)
 
-    # image corners, detected above
-    image_corners: List[NormalizedImagePoint] = [camera.pixel2vector(c) for c in corners]
+    image_corners, ground_corners, ground_corners_projected, errors = get_ground_corners_and_error(camera, corners,
+                                                                                                   board, camera.H)
 
-    # ground points, easily reconstructable given a known board
-    ground_corners: List[GroundPoint] = []
-    board_offset = np.array([board.x_offset, board.y_offset])
-    square_size = board.square_size
-    for r in range(board.rows - 1):
-        for c in range(board.columns - 1):
-            src_corner = np.array([(r + 1) * square_size, (c + 1) * square_size]) + board_offset
-            ground_corners.append(GroundPoint(*src_corner))
-    # OpenCV labels corners left-to-right, top-to-bottom, let's do the same
-    ground_corners = ground_corners[::-1]
-
+    print(f"num image corners: {len(image_corners)}, num ground_corners: {len(ground_corners)}")
     # make sure the corners match in size
     assert len(image_corners) == len(ground_corners)
 
