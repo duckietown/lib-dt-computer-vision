@@ -19,7 +19,7 @@ jobs:
           name: Install deps
           command: |
             echo PATH=$PATH
-            python3 -m pip install -r requirements.txt
+            pip install -q --user --upgrade -r requirements.txt
 
       - run:
           name: List deps
