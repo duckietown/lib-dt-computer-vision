@@ -5,8 +5,8 @@ from setuptools import find_packages, setup
 # it is not the python module names.
 package_name = "dt-computer-vision"
 library_webpage = f"http://github.com/duckietown/lib-{package_name}"
-maintainer = "Andrea F. Daniele"
-maintainer_email = "afdaniele@duckietown.com"
+maintainer = "Liam Paull"
+maintainer_email = "liam@duckietown.com"
 short_description = "Computer Vision components of Duckietown's autonomy behavior."
 full_description = """
 Computer Vision components of the autonomous behavior pipeline running on Duckietown robots.
@@ -38,10 +38,10 @@ install_requires = [
     "numpy<=1.26.4",
     # requests
     "requests<=2.31.0",
+    "matplotlib"
 ]
 tests_require = [
     "pytest",
-    "matplotlib",
     "pytest-cov",
 ]
 
