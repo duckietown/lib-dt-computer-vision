@@ -47,6 +47,8 @@ class AntiInstagram:
         # update lower threshold
         self.lower_threshold = lower_threshold
 
+        return (self.lower_threshold, self.higher_threshold)
+
     def apply(self,
               image: BGRImage,
               image_scale: float = 1.0,
@@ -63,8 +65,7 @@ class AntiInstagram:
         # saturate each channel
         for idx, channel in enumerate(channels):
             thresholded = self._apply_threshold(channel, lower_thr[idx], higher_thr[idx])
-            # TODO: that `.copy()` might be expensive
-            normalized = cv2.normalize(thresholded, thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
+            normalized = cv2.normalize(thresholded, None, 0, 255, cv2.NORM_MINMAX)
             out_channels.append(normalized)
         # recombine B, G, R -> BGR
         return cv2.merge(out_channels)
