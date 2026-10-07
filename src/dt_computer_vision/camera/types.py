@@ -10,6 +10,10 @@ from dt_computer_vision.camera.homography import Homography
 from .utils import invert_map, ensure_ndarray
 import yaml
 
+PLUMB_BOB = "plumb_bob"
+EQUIDISTANT = "equidistant"
+DISTORTION_COEFFICIENTS = {PLUMB_BOB: 5, EQUIDISTANT: 4}
+
 BGRImage = np.ndarray
 RGBImage = np.ndarray
 HSVImage = np.ndarray
@@ -117,10 +121,16 @@ class Rectifier:
         mapx = np.ndarray(shape=(H, W, 1), dtype="float32")
         mapy = np.ndarray(shape=(H, W, 1), dtype="float32")
         # noinspection PyUnresolvedReferences
-        self.mapx, self.mapy = cv2.initUndistortRectifyMap(
-            self.camera.K, self.camera.D, self.camera.R, self.camera.P, # type: ignore
-            (W, H), cv2.CV_32FC1, mapx, mapy
-        ) # type: ignore
+        if self.camera.is_fisheye:
+            self.mapx, self.mapy = cv2.fisheye.initUndistortRectifyMap(
+                self.camera.K, self.camera.D, self.camera.R, self.camera.P, # type: ignore
+                (W, H), cv2.CV_32FC1
+            ) # type: ignore
+        else:
+            self.mapx, self.mapy = cv2.initUndistortRectifyMap(
+                self.camera.K, self.camera.D, self.camera.R, self.camera.P, # type: ignore
+                (W, H), cv2.CV_32FC1, mapx, mapy
+            ) # type: ignore
         self._rectify_inited = True
 
     def rectify_pixel(self, point: Pixel) -> Pixel:
@@ -133,11 +143,12 @@ class Rectifier:
         pixel coordinates of the rectified point.
         """
         src = point.as_array().reshape((1, 1, 2)).astype(float)
-        dst = cv2.undistortPoints(src,
-                                  self.camera.K,
-                                  self.camera.D,
-                                  R=self.camera.R,
-                                  P=self.camera.P)
+        undistort_points = cv2.fisheye.undistortPoints if self.camera.is_fisheye else cv2.undistortPoints
+        dst = undistort_points(src,
+                               self.camera.K,
+                               self.camera.D,
+                               R=self.camera.R,
+                               P=self.camera.P)
         return Pixel(*dst[0, 0])
 
     def rectify(self, image: BGRImage, interpolation=cv2.INTER_NEAREST) -> BGRImage:
@@ -184,17 +195,31 @@ class CameraModel:
     P: np.ndarray
     R: Optional[np.ndarray] = dataclasses.field(default_factory=lambda: np.eye(3))
     H: Optional[np.ndarray] = None
+    distortion_model: str = PLUMB_BOB
 
     rectifier: Rectifier = dataclasses.field(init=False)
 
     def __post_init__(self):
+        assert self.distortion_model in DISTORTION_COEFFICIENTS, \
+            f"Unknown distortion model '{self.distortion_model}'."
         self.K = ensure_ndarray(self.K, shape=(3, 3))
-        self.D = ensure_ndarray(self.D, shape=(5,))
+        self.D = ensure_ndarray(self.D, shape=(DISTORTION_COEFFICIENTS[self.distortion_model],))
         self.P = ensure_ndarray(self.P, shape=(3, 4))
         self.R = ensure_ndarray(self.R, shape=(3, 3)) if self.R is not None else np.eye(3)
         self.H = None if self.H is None else ensure_ndarray(self.H)
         self._H_inv = None if self.H is None else np.linalg.inv(self.H)
         self.rectifier = Rectifier(self)
+
+    @property
+    def is_fisheye(self) -> bool:
+        return self.distortion_model == EQUIDISTANT
+
+    def _rectified_K(self, K: np.ndarray, shape: Tuple[int, int]) -> np.ndarray:
+        if self.is_fisheye:
+            return cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(
+                K, self.D, shape, np.eye(3), balance=0.0, new_size=shape
+            )
+        return cv2.getOptimalNewCameraMatrix(K, self.D, shape, 0, shape)[0]
 
     @property
     def fx(self) -> float:
@@ -260,7 +285,7 @@ class CameraModel:
             [0,              0,                1],
         ])
         shape: Tuple[int, int] = (self.width - left - right, self.height - top - bottom)
-        K1rect, _ = cv2.getOptimalNewCameraMatrix(K1, self.D, shape, 0, shape)
+        K1rect = self._rectified_K(K1, shape)
         P1rect = np.hstack((K1rect, [[0], [0], [1]]))
         return CameraModel(
             width=shape[0],
@@ -269,7 +294,8 @@ class CameraModel:
             D=self.D,
             # TODO: we are not testing this rigorously (e.g., unit tests)
             P=P1rect,
-            H=self.H
+            H=self.H,
+            distortion_model=self.distortion_model
         )
 
     def scaled(self, s: float) -> 'CameraModel':
@@ -277,7 +303,7 @@ class CameraModel:
         K1[2, 2] = 1.0
         w, h = round(self.width * s), round(self.height * s)
         shape: Tuple[int, int] = (w, h)
-        K1rect, _ = cv2.getOptimalNewCameraMatrix(K1, self.D, shape, 0, shape)
+        K1rect = self._rectified_K(K1, shape)
         P1rect = np.hstack((K1rect, [[0], [0], [1]]))
         
         scaling_matrix = np.eye(3)
@@ -292,7 +318,8 @@ class CameraModel:
             D=self.D,
             # TODO: we are not testing this rigorously (e.g., unit tests)
             P=P1rect,
-            H=self.H @ scaling_matrix @ self._H_inv if self.H is not None else None
+            H=self.H @ scaling_matrix @ self._H_inv if self.H is not None else None,
+            distortion_model=self.distortion_model
         )
         
     def downsample(self, binning: int) -> 'CameraModel':
@@ -385,7 +412,8 @@ class CameraModel:
             'D': self.D.tolist(),
             'P': self.P.tolist(),
             'R': self.R.tolist() if self.R is not None else None,
-            'H': self.H.tolist() if self.H is not None else None
+            'H': self.H.tolist() if self.H is not None else None,
+            'distortion_model': self.distortion_model
         }
 
     @classmethod
@@ -397,7 +425,8 @@ class CameraModel:
             D=np.array(data['D']),
             P=np.array(data['P']),
             R=np.array(data['R']) if 'R' in data and data['R'] is not None else None,
-            H=np.array(data['H']) if data['H'] is not None else None
+            H=np.array(data['H']) if data['H'] is not None else None,
+            distortion_model=data.get('distortion_model', PLUMB_BOB)
         )
         
     @classmethod
@@ -412,13 +441,19 @@ class CameraModel:
         R = np.array(data['rectification_matrix']['data']).reshape(3, 3)
         width = data['image_width']
         height = data['image_height']
+        distortion_model = data.get('distortion_model', PLUMB_BOB)
         
         if alpha > 0.0:
             # Compute the new camera matrix
-            K, _ = cv2.getOptimalNewCameraMatrix(K, D, (width, height), alpha)
+            if distortion_model == EQUIDISTANT:
+                K = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(
+                    K, D, (width, height), np.eye(3), balance=alpha
+                )
+            else:
+                K, _ = cv2.getOptimalNewCameraMatrix(K, D, (width, height), alpha)
             P = np.hstack((K, [[0], [0], [0]]))
     
-        return CameraModel(width, height, K, D, P, R)
+        return CameraModel(width, height, K, D, P, R, distortion_model=distortion_model)
     
     def to_ros_calibration(self, filestream, camera_name = 'camera'):
         """
@@ -433,10 +468,10 @@ class CameraModel:
                 'cols': 3,
                 'data': self.K.flatten().tolist()
             },
-            'distortion_model': 'plumb_bob',
+            'distortion_model': self.distortion_model,
             'distortion_coefficients': {
                 'rows': 1,
-                'cols': 5,
+                'cols': self.D.size,
                 'data': self.D.flatten().tolist()
             },
             'rectification_matrix': {
