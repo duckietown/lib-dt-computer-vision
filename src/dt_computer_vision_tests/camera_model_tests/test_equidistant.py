@@ -54,6 +54,24 @@ def test_default_is_plumb_bob():
     assert not camera.is_fisheye
 
 
+def _raises_assertion(native: dict) -> bool:
+    try:
+        CameraModel.from_native_objects(native)
+    except AssertionError:
+        return True
+    return False
+
+
+def test_unknown_distortion_model_is_rejected():
+    assert _raises_assertion({**test_camera, "distortion_model": "rational_polynomial"})
+
+
+def test_coefficient_count_must_match_the_model():
+    # 4 coefficients are only valid for equidistant, 5 only for plumb_bob
+    assert _raises_assertion({**test_camera, "distortion_model": PLUMB_BOB})
+    assert _raises_assertion({**test_camera, "D": test_camera["D"] + [0.0]})
+
+
 def test_rectify_pixel():
     camera: CameraModel = CameraModel.from_native_objects(test_camera)
     for u, v in test_pixels:
