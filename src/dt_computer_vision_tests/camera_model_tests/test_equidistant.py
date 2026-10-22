@@ -157,18 +157,19 @@ def test_ros_alpha_keeps_full_image():
     loaded: CameraModel = _load_with_alpha(1.0)
     assert loaded.is_fisheye
     assert np.allclose(loaded.D, test_camera["D"])
-    assert np.allclose(loaded.P[:, :3], loaded.K)
-    source = dict(test_camera, P=loaded.P.tolist())
-    camera: CameraModel = CameraModel.from_native_objects(source)
+    # the lens matrix is kept, only the rectified projection changes
+    assert np.allclose(loaded.K, test_camera["K"])
+    assert not np.allclose(loaded.P[:, :3], loaded.K)
     margins = []
     for u, v in [(W / 2, 0), (W, H / 2), (W / 2, H), (0, H / 2)]:
-        x, y = camera.rectifier.rectify_pixel(Pixel(u, v)).as_array()
+        x, y = loaded.rectifier.rectify_pixel(Pixel(u, v)).as_array()
         margins.extend([x, W - x, y, H - y])
     assert abs(min(margins)) < 0.5
 
 
 def test_ros_alpha_trades_view_for_zoom():
-    # a smaller alpha crops more of the source image, so the focal length grows
+    # a smaller alpha crops more of the source image, so the rectified focal length grows
     full, half = _load_with_alpha(1.0), _load_with_alpha(0.5)
-    assert half.fx > full.fx
-    assert half.fy > full.fy
+    assert half.P[0, 0] > full.P[0, 0]
+    assert half.P[1, 1] > full.P[1, 1]
+    assert np.allclose(half.K, full.K)
