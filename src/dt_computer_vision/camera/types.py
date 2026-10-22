@@ -446,12 +446,14 @@ class CameraModel:
         if alpha > 0.0:
             # Compute the new camera matrix
             if distortion_model == EQUIDISTANT:
-                K = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(
+                # the new matrix only describes the rectified image, K stays the lens
+                K_rect = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(
                     K, D, (width, height), np.eye(3), balance=alpha
                 )
+                P = np.hstack((K_rect, [[0], [0], [0]]))
             else:
                 K, _ = cv2.getOptimalNewCameraMatrix(K, D, (width, height), alpha)
-            P = np.hstack((K, [[0], [0], [0]]))
+                P = np.hstack((K, [[0], [0], [0]]))
     
         return CameraModel(width, height, K, D, P, R, distortion_model=distortion_model)
     
