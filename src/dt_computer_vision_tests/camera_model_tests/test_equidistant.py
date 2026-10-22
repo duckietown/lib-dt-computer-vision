@@ -1,5 +1,6 @@
 import io
 
+import cv2
 import numpy as np
 
 from dt_computer_vision.camera import CameraModel, Pixel
@@ -173,3 +174,17 @@ def test_ros_alpha_trades_view_for_zoom():
     assert half.P[0, 0] > full.P[0, 0]
     assert half.P[1, 1] > full.P[1, 1]
     assert np.allclose(half.K, full.K)
+
+
+def test_ros_alpha_uses_the_rectification_rotation():
+    # with a rotated rectification, alpha = 1 must still keep the source image edges in view
+    W, H = test_camera["width"], test_camera["height"]
+    R, _ = cv2.Rodrigues(np.array([0.0, np.deg2rad(20), 0.0]))
+    stream = io.StringIO()
+    CameraModel.from_native_objects(dict(test_camera, R=R.tolist())).to_ros_calibration(stream)
+    stream.seek(0)
+    loaded: CameraModel = CameraModel.from_ros_calibration(stream, alpha=1.0)
+    assert np.allclose(loaded.R, R)
+    for u, v in [(W / 2, 0), (W, H / 2), (W / 2, H), (0, H / 2)]:
+        x, y = loaded.rectifier.rectify_pixel(Pixel(u, v)).as_array()
+        assert -0.5 <= x <= W + 0.5 and -0.5 <= y <= H + 0.5
